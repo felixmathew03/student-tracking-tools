@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:title" content="Synnefo Student Operations Platform — MongoDB Schema">
+<meta property="og:description" content="Normalized MongoDB collection design, relationships, indexes and data-flow mindmap for the Synnefo Student Operations Platform.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b1020">
+<title>Synnefo — MongoDB Database Schema</title>
+<style>
+:root{
+  --bg:#080b14;--panel:#101522;--panel2:#151b2b;--line:#293248;
+  --text:#eef2ff;--muted:#9da8c2;--accent:#7c9cff;--accent2:#57d6b5;
+  --warn:#f0b45d;--danger:#ed7d9a;--shadow:0 18px 50px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(135deg,#070a12,#0c1220 45%,#090d18);color:var(--text);font:14px/1.55 Inter,Segoe UI,Arial,sans-serif}
+a{color:#9db4ff;text-decoration:none}
+.container{max-width:1500px;margin:auto;padding:28px}
+.hero{padding:34px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(124,156,255,.12),rgba(87,214,181,.05));border-radius:24px;box-shadow:var(--shadow)}
+h1{font-size:34px;margin:0 0 8px}
+h2{margin-top:44px;font-size:25px}
+h3{margin-top:28px;color:#dce5ff}
+p{color:var(--muted)}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.badge{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0d1320;color:#c9d3ec}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.card{background:rgba(16,21,34,.9);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 8px 25px rgba(0,0,0,.18)}
+.card strong{color:#fff}
+.nav{position:sticky;top:0;z-index:5;background:rgba(8,11,20,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:10px 28px}
+.nav a{margin-right:16px;font-size:13px}
+.section{margin-top:35px}
+table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#0d1220}
+th,td{padding:11px 12px;border-bottom:1px solid #222a3d;text-align:left;vertical-align:top}
+th{background:#151c2c;color:#dfe6fb;position:sticky;top:42px;z-index:2}
+tr:last-child td{border-bottom:0}
+td code,code{background:#171e30;border:1px solid #273149;padding:2px 5px;border-radius:5px;color:#bcd0ff}
+.small{font-size:12px;color:var(--muted)}
+.pk{color:#8eb2ff;font-weight:700}.fk{color:#6fe0c1;font-weight:700}.derived{color:#f1bd6c}.required{color:#f1a0b7}
+.schema{margin-bottom:30px}
+.collection-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tag{font-size:11px;padding:4px 8px;border-radius:6px;background:#18213a;color:#a9bfff}
+svg{width:100%;height:720px;background:#080c15;border:1px solid var(--line);border-radius:18px}
+.node rect{rx:10;ry:10;stroke:#36415b;stroke-width:1}
+.node text{fill:#e9edff;font-size:13px}
+.edge{stroke:#4b5a7a;stroke-width:1.3;opacity:.7}
+.edge-label{fill:#8f9ab4;font-size:10px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+button{background:#151e32;color:#dce5ff;border:1px solid var(--line);padding:9px 13px;border-radius:8px;cursor:pointer}
+button:hover{border-color:#6077b0}
+.note{border-left:3px solid var(--accent);padding:12px 15px;background:#0e1422;border-radius:0 10px 10px 0;color:#c7d0e6}
+.warning{border-left-color:var(--warn)}
+.good{border-left-color:var(--accent2)}
+.search{width:100%;max-width:450px;background:#0d1320;border:1px solid var(--line);padding:10px 12px;border-radius:9px;color:#fff}
+footer{margin:55px 0 20px;color:#69758e;text-align:center}
+@media(max-width:800px){.container{padding:16px}.hero{padding:22px}h1{font-size:27px}svg{height:850px}th{top:48px}}
+</style>
+</head>
+<body>
+<div class="nav">
+  <a href="#principles">Principles</a>
+  <a href="#map">Mindmap</a>
+  <a href="#collections">Collections</a>
+  <a href="#relationships">Relationships</a>
+  <a href="#indexes">Indexes</a>
+  <a href="#rules">Rules</a>
+  <a href="#flow">Lifecycle</a>
+</div>
+<div class="container">
+<section class="hero">
+  <div class="small">SYNNEFO STUDENT OPERATIONS PLATFORM</div>
+  <h1>MongoDB Database Schema — Normalized Design</h1>
+  <p>A student-centric operational database for admissions, programs, multi-program batches, sessions, attendance, assignments, assessments, internship, placement, finance, communication, documents and audit.</p>
+  <div class="badges">
+    <span class="badge">MongoDB / Mongoose-ready</span>
+    <span class="badge">Atomic fields</span>
+    <span class="badge">3NF principles</span>
+    <span class="badge">Historical records preserved</span>
+    <span class="badge">No reporting duplication</span>
+  </div>
+</section>
+
+<section id="principles" class="section">
+<h2>1. Design Decisions</h2>
+<div class="grid">
+<div class="card"><strong>Student is the long-lived entity.</strong><p>Current batch/program context must never own historical attendance, assessments, submissions or payments.</p></div>
+<div class="card"><strong>Batch is operational.</strong><p>A batch may contain students from multiple programs. The many-to-many batch↔program relationship is therefore explicit.</p></div>
+<div class="card"><strong>Assignments and projects are one entity.</strong><p>The same <code>assignments</code> domain supports academic and internship work through context references.</p></div>
+<div class="card"><strong>No derived storage.</strong><p>Do not store attendance percentage, outstanding balance, completion percentage or similar values as source-of-truth fields. Calculate them from operational records.</p></div>
+<div class="card"><strong>Separate sensitive domains.</strong><p>Grievances and disciplinary records are independent collections with restricted access.</p></div>
+<div class="card"><strong>Authentication is separate.</strong><p><code>users</code> represents login identity; <code>students</code> and <code>staff</code> hold domain profiles.</p></div>
+</div>
+<div class="note good" style="margin-top:16px">
+<strong>What “3NF” means here:</strong> fields are atomic and facts are stored once at their natural ownership level. We do not create a collection simply because two collections can be joined; we create one when the relationship has its own identity, attributes, history or lifecycle.
+</div>
+</section>
+
+<section id="map" class="section">
+<h2>2. Table / Collection Interconnection Mindmap</h2>
+<p>This map shows the main operational relationships. A line means the target collection is referenced by the source collection.</p>
+<div class="controls">
+<button onclick="toggleDomain('all')">All</button>
+<button onclick="toggleDomain('academic')">Academic</button>
+<button onclick="toggleDomain('career')">Career</button>
+<button onclick="toggleDomain('finance')">Finance</button>
+<button onclick="toggleDomain('admin')">Admin</button>
+</div>
+<svg id="mapSvg" viewBox="0 0 1450 720" role="img" aria-label="MongoDB collection relationship map">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 z" fill="#4b5a7a"/></marker></defs>
+<g id="edges"></g><g id="nodes"></g>
+</svg>
+</section>
+
+<section id="collections" class="section">
+<h2>3. Complete Collection Dictionary</h2>
+<input class="search" id="search" placeholder="Filter collections, fields or descriptions...">
+<div id="tables"></div>
+</section>
+
+<section id="relationships" class="section">
+<h2>4. Relationship Rules</h2>
+<table>
+<tr><th>Relationship</th><th>Cardinality</th><th>Implementation</th><th>Reason</th></tr>
+<tr><td>Program → Curriculum Item</td><td>1 : N</td><td><code>curriculum_items.program_id</code></td><td>Same-named items in different programs remain distinct.</td></tr>
+<tr><td>Batch ↔ Program</td><td>N : N</td><td><code>batch_programs</code></td><td>A batch can serve common curriculum for multiple programs.</td></tr>
+<tr><td>Student → Program Enrollment</td><td>1 : N structurally; 1 active in current scope</td><td><code>program_enrollments.student_id</code></td><td>Preserves an admission/enrollment record without forcing multiple active programs.</td></tr>
+<tr><td>Student ↔ Batch</td><td>N : N over time</td><td><code>batch_enrollments</code></td><td>History and transfer dates belong to the relationship.</td></tr>
+<tr><td>Batch → Session</td><td>1 : N</td><td><code>sessions.batch_id</code></td><td>Session belongs to the actual operational batch.</td></tr>
+<tr><td>Student ↔ Session</td><td>N : N</td><td><code>attendance_records</code></td><td>Attendance means this student attended this actual session; supports cross-batch attendance.</td></tr>
+<tr><td>Assignment → Target</td><td>1 : N</td><td><code>assignment_targets</code></td><td>One assignment can target a batch or selected students.</td></tr>
+<tr><td>Assignment ↔ Student</td><td>N : N through targets/submissions</td><td><code>assignment_targets</code>, <code>assignment_submissions</code></td><td>Submission history belongs to student+assignment.</td></tr>
+<tr><td>Exam → Attempt</td><td>1 : N</td><td><code>exam_attempts</code></td><td>Supports attempts and result history.</td></tr>
+<tr><td>Student → Internship</td><td>1 : N structurally</td><td><code>internships.student_id</code></td><td>Future-proofs repeated internship records without embedding.</td></tr>
+<tr><td>Company → Job Opening</td><td>1 : N</td><td><code>job_openings.company_id</code></td><td>Company is independently reusable.</td></tr>
+<tr><td>Placement Drive → Application</td><td>1 : N</td><td><code>placement_applications.drive_id</code></td><td>Captures recruitment participation.</td></tr>
+<tr><td>Application → Test/Interview/Offer</td><td>1 : N / 1 : N / 1 : N</td><td>Dedicated collections</td><td>Each stage has its own data and history.</td></tr>
+<tr><td>Student → Fee Account → Installments → Payments</td><td>1:N</td><td>Dedicated financial collections</td><td>Financial events must be auditable and not overwritten.</td></tr>
+</table>
+</section>
+
+<section id="indexes" class="section">
+<h2>5. Core Index Strategy</h2>
+<div class="grid">
+<div class="card"><strong>Student</strong><p><code>student_code</code> unique; normalized email/phone indexes as required.</p></div>
+<div class="card"><strong>Enrollment</strong><p><code>{student_id, status}</code>, <code>{student_id, start_date}</code>, and a uniqueness rule for one active enrollment if enforced by application/partial index.</p></div>
+<div class="card"><strong>Batch</strong><p><code>batch_code</code> unique; <code>{status, start_date}</code>.</p></div>
+<div class="card"><strong>Attendance</strong><p>Unique <code>{session_id, student_id}</code>; <code>{student_id, session_id}</code>; session-date queries through session indexes.</p></div>
+<div class="card"><strong>Assignments</strong><p><code>{batch_id, deadline}</code> where relevant; unique <code>{assignment_id, student_id}</code> for target/submission relationships.</p></div>
+<div class="card"><strong>Finance</strong><p>Unique transaction/reference IDs where provider guarantees uniqueness; indexes on student and payment status/date.</p></div>
+<div class="card"><strong>Placement</strong><p>Indexes on company, opening, drive, student and application status/stage.</p></div>
+<div class="card"><strong>Audit</strong><p><code>{entity_type, entity_id, created_at}</code> and <code>{actor_user_id, created_at}</code>.</p></div>
+</div>
+</section>
+
+<section id="rules" class="section">
+<h2>6. Important Integrity Rules</h2>
+<div class="note">
+<ul>
+<li>Never rewrite old attendance because of a batch change.</li>
+<li>Never move an old attendance record to the student's new batch.</li>
+<li>A cross-batch attendance record references the actual session only; no reason field is required.</li>
+<li>A batch may be connected to multiple programs.</li>
+<li>A curriculum item is program-owned; same display name does not make two items identical.</li>
+<li>Do not store attendance percentage as authoritative data.</li>
+<li>Do not store outstanding balance as authoritative data; derive it from fee obligations and realized payments.</li>
+<li>Do not duplicate student name/program/batch in every operational document unless it is explicitly a historical snapshot requirement.</li>
+<li>Do not embed disciplinary/grievance data inside <code>students</code>.</li>
+<li>Do not embed unbounded attendance, submissions or payments arrays inside <code>students</code>.</li>
+<li>Use application/service-layer transactions for multi-document operations such as batch transfer and payment recording.</li>
+</ul>
+</div>
+<div class="note warning" style="margin-top:16px">
+<strong>MongoDB transaction note:</strong> Because important workflows touch several collections, use MongoDB transactions for operations that must succeed or fail together—for example creating a batch enrollment and closing the previous one.
+</div>
+</section>
+
+<section id="flow" class="section">
+<h2>7. Student Lifecycle Through the Database</h2>
+<div class="grid">
+<div class="card"><strong>1. Admission</strong><p><code>users</code> → <code>students</code> → <code>program_enrollments</code> → <code>fee_accounts</code></p></div>
+<div class="card"><strong>2. Batch allocation</strong><p><code>batch_programs</code> identifies programs served by a batch; <code>batch_enrollments</code> connects the student to the operational batch.</p></div>
+<div class="card"><strong>3. Training</strong><p><code>sessions</code> → <code>attendance_records</code>; <code>assignments</code> → <code>assignment_targets</code> → <code>assignment_submissions</code>; <code>exams</code> → <code>exam_attempts</code>.</p></div>
+<div class="card"><strong>4. Internship</strong><p><code>internships</code> contains the internship engagement; internship work is represented by <code>assignments</code> using internship context.</p></div>
+<div class="card"><strong>5. Placement</strong><p><code>companies</code> → <code>job_openings</code> → <code>placement_drives</code> → <code>placement_applications</code> → tests/interviews/offers/joining.</p></div>
+<div class="card"><strong>6. Exit</strong><p><code>certificates</code>, student status/history, final finance state and placement/internship records remain independently queryable.</p></div>
+</div>
+</section>
+
+<footer>Synnefo Student Operations Platform · Database architecture reference · Generated from the supplied project brief and clarified requirements</footer>
+</div>
+
+<script>
+const collections = [
+["users","Administration","Authentication identity used by all login types.","_id:ObjectId","email:String","password_hash:String","status:String","last_login_at:Date?","created_at:Date","updated_at:Date"],
+["students","Identity","Long-lived student profile.","_id:ObjectId","user_id:ObjectId FK users","student_code:String UNIQUE","first_name:String","middle_name:String?","last_name:String","date_of_birth:Date?","gender:String?","photo_document_id:ObjectId?","email:String","phone:String","address_line_1:String?","address_line_2:String?","city:String?","state:String?","postal_code:String?","country:String?","emergency_contact_name:String?","emergency_contact_phone:String?","admission_date:Date","status:String","created_at:Date","updated_at:Date"],
+["staff","Identity","Staff business profile; responsibilities/roles are managed by the authorization layer.","_id:ObjectId","user_id:ObjectId FK users","staff_code:String UNIQUE","first_name:String","last_name:String","email:String","phone:String?","status:String","created_at:Date","updated_at:Date"],
+["programs","Academic","Program definition.","_id:ObjectId","code:String UNIQUE","name:String","description:String?","status:String","created_at:Date","updated_at:Date"],
+["curriculum_items","Academic","Program-specific curriculum item.","_id:ObjectId","program_id:ObjectId FK programs","name:String","description:String?","sequence_no:Int?","status:String","created_at:Date","updated_at:Date"],
+["batches","Academic","Operational group; may serve multiple programs.","_id:ObjectId","batch_code:String UNIQUE","name:String","start_date:Date","end_date:Date?","status:String","created_at:Date","updated_at:Date"],
+["batch_programs","Academic","Programs served by a batch.","_id:ObjectId","batch_id:ObjectId FK batches","program_id:ObjectId FK programs","created_at:Date"],
+["program_enrollments","Enrollment","Student's program enrollment/admission record. Current scope expects one active program.","_id:ObjectId","student_id:ObjectId FK students","program_id:ObjectId FK programs","admission_date:Date","start_date:Date","end_date:Date?","status:String","created_at:Date","updated_at:Date"],
+["batch_enrollments","Enrollment","Historical student↔batch relationship.","_id:ObjectId","student_id:ObjectId FK students","batch_id:ObjectId FK batches","start_date:Date","end_date:Date?","status:String","reason:String?","created_at:Date","updated_at:Date"],
+["rooms","Operations","Physical classroom/lab resource.","_id:ObjectId","name:String","room_code:String UNIQUE","type:String","capacity:Int","status:String","created_at:Date","updated_at:Date"],
+["sessions","Academic","Actual offline class/session.","_id:ObjectId","batch_id:ObjectId FK batches","curriculum_item_id:ObjectId FK curriculum_items","trainer_id:ObjectId FK staff","room_id:ObjectId FK rooms","session_type:String","start_at:Date","end_at:Date","status:String","created_at:Date","updated_at:Date"],
+["attendance_records","Attendance","Student attendance for an actual session.","_id:ObjectId","session_id:ObjectId FK sessions","student_id:ObjectId FK students","status:String","marked_at:Date","marked_by_user_id:ObjectId FK users","source:String","remarks:String?","created_at:Date","updated_at:Date"],
+["assignments","Academic/Internship","Unified assignment/project/task entity.","_id:ObjectId","title:String","description:String?","context_type:String (academic|internship)","program_id:ObjectId FK programs?","curriculum_item_id:ObjectId FK curriculum_items?","internship_id:ObjectId FK internships?","created_by_staff_id:ObjectId FK staff","created_at:Date","updated_at:Date","deadline:Date","status:String"],
+["assignment_targets","Academic/Internship","Who an assignment is assigned to: batch or selected student.","_id:ObjectId","assignment_id:ObjectId FK assignments","batch_id:ObjectId FK batches?","student_id:ObjectId FK students?","created_at:Date"],
+["assignment_submissions","Academic/Internship","Submission history for a student's assignment.","_id:ObjectId","assignment_id:ObjectId FK assignments","student_id:ObjectId FK students","submitted_at:Date?","status:String","attachment_document_ids:[ObjectId]","repository_url:String?","score:Number?","feedback:String?","reviewed_by_staff_id:ObjectId FK staff?","reviewed_at:Date?","resubmission_no:Int","created_at:Date","updated_at:Date"],
+["exams","Assessment","Exam/assessment definition.","_id:ObjectId","title:String","description:String?","batch_id:ObjectId FK batches?","program_id:ObjectId FK programs?","curriculum_item_id:ObjectId FK curriculum_items?","scheduled_start:Date","scheduled_end:Date","max_marks:Number","pass_marks:Number?","status:String","created_by_staff_id:ObjectId FK staff","created_at:Date","updated_at:Date"],
+["exam_attempts","Assessment","Student attempt/result history.","_id:ObjectId","exam_id:ObjectId FK exams","student_id:ObjectId FK students","attempt_no:Int","marks_obtained:Number?","percentage:Number?","grade:String?","status:String","feedback:String?","evaluated_by_staff_id:ObjectId FK staff?","evaluated_at:Date?","created_at:Date","updated_at:Date"],
+["mock_interviews","Career","Mock interview record and evaluation.","_id:ObjectId","student_id:ObjectId FK students","interviewer_staff_id:ObjectId FK staff","scheduled_at:Date","interview_type:String","technical_area:String?","criteria_scores:Object?","overall_score:Number?","strengths:String?","weaknesses:String?","feedback:String?","recommendations:String?","status:String","created_at:Date","updated_at:Date"],
+["feedback","Student Success","Feedback records; direction/type is explicit.","_id:ObjectId","student_id:ObjectId FK students","direction:String (student_to_synnefo|staff_to_student)","category:String","submitted_by_user_id:ObjectId FK users","target_staff_id:ObjectId FK staff?","target_batch_id:ObjectId FK batches?","target_program_id:ObjectId FK programs?","rating:Number?","comments:String","created_at:Date","updated_at:Date"],
+["internships","Internship","Internship engagement after program completion.","_id:ObjectId","student_id:ObjectId FK students","program_id:ObjectId FK programs","company_name:String","mentor_name:String?","mentor_contact:String?","start_date:Date","end_date:Date?","status:String","performance_summary:String?","certificate_document_id:ObjectId?","created_at:Date","updated_at:Date"],
+["companies","Placement","Employer/company.","_id:ObjectId","name:String","website:String?","industry:String?","contact_name:String?","contact_email:String?","contact_phone:String?","address:String?","status:String","created_at:Date","updated_at:Date"],
+["job_openings","Placement","Company job opening.","_id:ObjectId","company_id:ObjectId FK companies","title:String","description:String?","location:String?","employment_type:String?","experience_requirement:String?","salary_description:String?","status:String","created_at:Date","updated_at:Date"],
+["placement_drives","Placement","Recruitment drive/event.","_id:ObjectId","job_opening_id:ObjectId FK job_openings","name:String","scheduled_at:Date","venue:String?","description:String?","status:String","created_at:Date","updated_at:Date"],
+["placement_applications","Placement","Student application to a drive/opening.","_id:ObjectId","drive_id:ObjectId FK placement_drives","student_id:ObjectId FK students","applied_at:Date","status:String","withdrawn_at:Date?","notes:String?","created_at:Date","updated_at:Date"],
+["recruitment_tests","Placement","Test stage for an application.","_id:ObjectId","application_id:ObjectId FK placement_applications","test_type:String","scheduled_at:Date?","max_score:Number?","score:Number?","result:String?","status:String","remarks:String?","created_at:Date","updated_at:Date"],
+["recruitment_interviews","Placement","Interview stage for an application.","_id:ObjectId","application_id:ObjectId FK placement_applications","interviewer_name:String?","interviewer_staff_id:ObjectId FK staff?","scheduled_at:Date?","round_no:Int","score:Number?","result:String?","feedback:String?","status:String","created_at:Date","updated_at:Date"],
+["offers","Placement","Offer issued for an application.","_id:ObjectId","application_id:ObjectId FK placement_applications","offer_date:Date","designation:String?","salary_description:String?","joining_date:Date?","document_id:ObjectId?","status:String","created_at:Date","updated_at:Date"],
+["joinings","Placement","Actual joining outcome for an offer.","_id:ObjectId","offer_id:ObjectId FK offers","joined_at:Date?","status:String","remarks:String?","created_at:Date","updated_at:Date"],
+["fee_plans","Finance","Reusable standard fee structure for a program.","_id:ObjectId","program_id:ObjectId FK programs","name:String","registration_fee:Number","tuition_fee:Number","gst_amount:Number","discount_amount:Number","scholarship_amount:Number","valid_from:Date","valid_to:Date?","status:String","created_at:Date","updated_at:Date"],
+["fee_accounts","Finance","Immutable agreed financial account created at admission.","_id:ObjectId","student_id:ObjectId FK students","program_enrollment_id:ObjectId FK program_enrollments","fee_plan_id:ObjectId FK fee_plans?","registration_fee:Number","tuition_fee:Number","gst_amount:Number","discount_amount:Number","scholarship_amount:Number","created_at:Date"],
+["fee_installments","Finance","Payment obligations for the student's fee account.","_id:ObjectId","fee_account_id:ObjectId FK fee_accounts","installment_no:Int","amount:Number","due_date:Date","status:String","created_at:Date","updated_at:Date"],
+["payments","Finance","Realized/recorded payment transaction.","_id:ObjectId","fee_installment_id:ObjectId FK fee_installments","amount:Number","payment_date:Date","method:String","transaction_reference:String?","receipt_document_id:ObjectId?","status:String","created_by_user_id:ObjectId FK users","created_at:Date","updated_at:Date"],
+["documents","Documents","Metadata for uploaded files stored by Synnefo's file storage layer.","_id:ObjectId","owner_type:String","owner_id:ObjectId","document_type:String","original_name:String","storage_key:String","mime_type:String","size_bytes:Number","uploaded_by_user_id:ObjectId FK users","uploaded_at:Date","status:String"],
+["notifications","Communication","Individual notification delivery record.","_id:ObjectId","user_id:ObjectId FK users","template_key:String","channel:String","subject:String?","body_reference:String?","related_entity_type:String?","related_entity_id:ObjectId?","provider_message_id:String?","status:String","sent_at:Date?","delivered_at:Date?","read_at:Date?","created_at:Date"],
+["notification_templates","Communication","Configurable notification template.","_id:ObjectId","template_key:String UNIQUE","channel:String","subject_template:String?","body_template:String","status:String","created_at:Date","updated_at:Date"],
+["announcements","Communication","Institute/program/batch/student announcement.","_id:ObjectId","title:String","body:String","created_by_user_id:ObjectId FK users","publish_at:Date","expires_at:Date?","status:String","created_at:Date","updated_at:Date"],
+["announcement_targets","Communication","Announcement audience relationship.","_id:ObjectId","announcement_id:ObjectId FK announcements","program_id:ObjectId FK programs?","batch_id:ObjectId FK batches?","student_id:ObjectId FK students?","created_at:Date"],
+["follow_ups","Student Success","Placement/student-success follow-up activity.","_id:ObjectId","student_id:ObjectId FK students","assigned_staff_id:ObjectId FK staff","type:String","subject:String","notes:String?","scheduled_at:Date?","completed_at:Date?","status:String","created_at:Date","updated_at:Date"],
+["grievances","Restricted","Confidential student grievance.","_id:ObjectId","student_id:ObjectId FK students","category:String","description:String","confidential:Boolean","assigned_staff_id:ObjectId FK staff?","status:String","resolution:String?","resolved_at:Date?","created_at:Date","updated_at:Date"],
+["grievance_communications","Restricted","Communication history within a grievance.","_id:ObjectId","grievance_id:ObjectId FK grievances","sender_user_id:ObjectId FK users","message:String","created_at:Date"],
+["disciplinary_records","Restricted","Confidential conduct/disciplinary case.","_id:ObjectId","student_id:ObjectId FK students","incident_date:Date","category:String","description:String","investigation:String?","action:String?","resolution:String?","status:String","created_at:Date","updated_at:Date"],
+["certificates","Documents/Career","Issued certificate record.","_id:ObjectId","student_id:ObjectId FK students","program_id:ObjectId FK programs?","internship_id:ObjectId FK internships?","certificate_type:String","certificate_number:String UNIQUE","issue_date:Date","document_id:ObjectId?","verification_code:String?","status:String","created_at:Date"],
+["audit_events","Audit","Broad event-level audit trail.","_id:ObjectId","actor_user_id:ObjectId FK users","event_type:String","entity_type:String","entity_id:ObjectId","summary:String","metadata:Object?","created_at:Date"]
+];
+
+const relationships = [
+["students","users"],["staff","users"],["curriculum_items","programs"],["batch_programs","batches"],["batch_programs","programs"],
+["program_enrollments","students"],["program_enrollments","programs"],["batch_enrollments","students"],["batch_enrollments","batches"],
+["sessions","batches"],["sessions","curriculum_items"],["sessions","staff"],["sessions","rooms"],["attendance_records","sessions"],["attendance_records","students"],
+["attendance_records","users"],["assignments","programs"],["assignments","curriculum_items"],["assignments","internships"],["assignments","staff"],
+["assignment_targets","assignments"],["assignment_targets","batches"],["assignment_targets","students"],["assignment_submissions","assignments"],["assignment_submissions","students"],["assignment_submissions","staff"],
+["exams","batches"],["exams","programs"],["exams","curriculum_items"],["exams","staff"],["exam_attempts","exams"],["exam_attempts","students"],["exam_attempts","staff"],
+["mock_interviews","students"],["mock_interviews","staff"],["feedback","students"],["feedback","users"],["feedback","staff"],["feedback","batches"],["feedback","programs"],
+["internships","students"],["internships","programs"],["companies","job_openings"],["job_openings","placement_drives"],["placement_drives","placement_applications"],["placement_applications","students"],
+["placement_applications","recruitment_tests"],["placement_applications","recruitment_interviews"],["placement_applications","offers"],["offers","joinings"],
+["fee_plans","programs"],["fee_accounts","students"],["fee_accounts","program_enrollments"],["fee_accounts","fee_plans"],["fee_installments","fee_accounts"],["payments","fee_installments"],["payments","users"],
+["documents","users"],["notifications","users"],["notifications","notification_templates"],["announcements","users"],["announcement_targets","announcements"],["announcement_targets","programs"],["announcement_targets","batches"],["announcement_targets","students"],
+["follow_ups","students"],["follow_ups","staff"],["grievances","students"],["grievances","staff"],["grievance_communications","grievances"],["grievance_communications","users"],
+["disciplinary_records","students"],["certificates","students"],["certificates","programs"],["certificates","internships"],["certificates","documents"],["audit_events","users"]
+];
+
+const domainMap = {};
+collections.forEach(c=>domainMap[c[0]]=c[1].toLowerCase().split("/")[0]);
+function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function renderTables(q=''){
+ const root=document.getElementById('tables'); root.innerHTML='';
+ collections.filter(c=>c.join(' ').toLowerCase().includes(q.toLowerCase())).forEach(c=>{
+   const wrap=document.createElement('div');wrap.className='schema';
+   let rows=c.slice(3).map(f=>{
+      const parts=f.split(':'); const name=parts[0], type=parts.slice(1).join(':');
+      let cls=name==='_id'?'pk':type.includes('FK')?'fk':type.includes('?')?'':'';
+      return `<tr><td><code class="${cls}">${esc(name)}</code></td><td>${esc(type)}</td><td>${name==='_id'?'Primary identifier':type.includes('FK')?'Reference to another collection':type.includes('UNIQUE')?'Business unique key':''}</td></tr>`
+   }).join('');
+   wrap.innerHTML=`<div class="collection-title"><h3>${esc(c[0])}</h3><span class="tag">${esc(c[1])}</span></div><p>${esc(c[2])}</p>
+   <table><tr><th>Field</th><th>Type / constraint</th><th>Role</th></tr>${rows}</table>`;
+   root.appendChild(wrap);
+ });
+}
+renderTables();
+document.getElementById('search').addEventListener('input',e=>renderTables(e.target.value));
+
+const svg=document.getElementById('mapSvg'), nodesG=document.getElementById('nodes'), edgesG=document.getElementById('edges');
+const positions = {
+ users:[80,70],students:[80,250],staff:[80,430],programs:[330,60],curriculum_items:[560,60],
+ batches:[330,210],batch_programs:[520,210],program_enrollments:[330,360],batch_enrollments:[540,360],
+ sessions:[760,160],rooms:[980,70],attendance_records:[1000,240],assignments:[760,360],assignment_targets:[1000,390],
+ assignment_submissions:[1210,390],exams:[760,510],exam_attempts:[1000,540],mock_interviews:[1210,540],
+ feedback:[80,610],internships:[330,560],companies:[560,650],job_openings:[760,650],placement_drives:[980,650],
+ placement_applications:[1190,650],recruitment_tests:[1190,500],recruitment_interviews:[1190,290],offers:[1000,100],
+ joinings:[1210,100],fee_plans:[330,120],fee_accounts:[540,500],fee_installments:[760,70],payments:[980,20],
+ documents:[560,520],notifications:[80,520],notification_templates:[80,350],announcements:[330,30],announcement_targets:[540,20],
+ follow_ups:[80,150],grievances:[80,690],grievance_communications:[330,690],disciplinary_records:[540,690],certificates:[760,20],audit_events:[1210,20]
+};
+const domainColor={administration:'#6477a8',identity:'#6e8fe8',academic:'#6f9cf5',enrollment:'#6ac9b1',operations:'#8a78d7',attendance:'#57c9b5','academic/internship':'#7b8ff2',assessment:'#d49b55',career:'#d26c8c',internship:'#58b8a2',placement:'#d26c8c',finance:'#e0ad5b',documents:'#8b91a8',communication:'#778de0','student success':'#57b9b5',restricted:'#b16f8e'};
+function groupClass(d){return d}
+function drawMap(filter='all'){
+ nodesG.innerHTML='';edgesG.innerHTML='';
+ const visible=new Set(collections.filter(c=>filter==='all'||domainMap[c[0]]===filter).map(c=>c[0]));
+ // if filtering, include neighbors so relationships remain understandable
+ if(filter!=='all') relationships.forEach(([a,b])=>{if(visible.has(a))visible.add(b);if(visible.has(b))visible.add(a)});
+ function point(name){
+   const [x,y]=positions[name]||[700,350];
+   return {x,y,w:145,h:42};
+ }
+ relationships.forEach(([a,b])=>{
+   if(!visible.has(a)||!visible.has(b))return;
+   const A=point(a),B=point(b);
+   const x1=A.x+A.w/2,y1=A.y+A.h/2,x2=B.x+B.w/2,y2=B.y+B.h/2;
+   const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+   line.setAttribute('x1',x1);line.setAttribute('y1',y1);line.setAttribute('x2',x2);line.setAttribute('y2',y2);line.setAttribute('class','edge');line.setAttribute('marker-end','url(#arrow)');
+   edgesG.appendChild(line);
+ });
+ collections.forEach(c=>{
+   if(!visible.has(c[0]))return;
+   const [x,y]=positions[c[0]]||[700,350];
+   const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','node');
+   const r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',145);r.setAttribute('height',42);r.setAttribute('fill','#111827');
+   r.setAttribute('stroke',domainColor[c[1].toLowerCase()]||'#36415b');g.appendChild(r);
+   const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',x+8);t.setAttribute('y',y+25);t.textContent=c[0];g.appendChild(t);
+   nodesG.appendChild(g);
+ });
+}
+function toggleDomain(d){
+ const map={'academic':'academic','career':'career','finance':'finance','admin':'administration'};
+ drawMap(map[d]||d);
+}
+drawMap();
+</script>
+</body>
+</html>
