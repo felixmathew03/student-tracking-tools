@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Synnefo Full Data Flow</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f7f8fa;--fg:#1c2230;--card:#fff;--bd:#d9dde5;--mut:#667085;--code:#eef1f6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151c;--fg:#e6e9f0;--card:#1b1f2a;--bd:#323848;--mut:#9aa3b5;--code:#242a38}}
+:root[data-theme="dark"]{--bg:#12151c;--fg:#e6e9f0;--card:#1b1f2a;--bd:#323848;--mut:#9aa3b5;--code:#242a38}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1200px;margin:0 auto;padding:20px 14px 60px}
+h1{font-size:24px;margin:0 0 4px}p{color:var(--mut);margin:4px 0}b{color:var(--fg)}
+button{padding:7px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--fg);font-size:13px;margin:4px 6px 4px 0;cursor:pointer}
+.map{overflow:auto;background:var(--card);border:1px solid var(--bd);border-radius:10px;margin-top:6px;max-height:78vh}
+svg text{font:11px system-ui,sans-serif;fill:var(--fg)}svg .m{font:600 10px ui-monospace,Menlo,Consolas,monospace}
+.t{fill:none;stroke-width:1.6;opacity:.55}.nd{cursor:pointer}.nd:hover rect{stroke-width:2.2}.sel rect{stroke-width:3}.tg{cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0}.chips span{font:11px ui-monospace,Menlo,Consolas,monospace;padding:2px 8px;border-radius:9px;cursor:pointer;border:1px solid var(--bd);color:#fff}
+#pn{position:fixed;left:0;right:0;bottom:0;max-height:42vh;overflow:auto;background:var(--card);border-top:2px solid var(--bd);padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));display:none;box-shadow:0 -6px 20px rgba(0,0,0,.18)}
+#pn .w{max-width:900px;margin:0 auto}#x{float:right;margin:0}
+.pill{font:600 12px ui-monospace,Menlo,Consolas,monospace;color:#fff;padding:1px 9px;border-radius:9px;margin-right:6px}
+.via{font-size:11px;color:var(--mut);font-weight:400;font-family:ui-monospace,Menlo,monospace;margin-left:6px}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:1px 12px;margin:6px 0;font-size:13px}
+dt{color:var(--mut);font-family:ui-monospace,Menlo,monospace}dd{margin:0;word-break:break-word}.d{font-style:italic;color:#0d9488}
+</style></head><body><main>
+<h1>Full data flow: one student across all 45 collections</h1>
+<p>Centre: a fictional student. Branches are numbered <b>1 to 10, clockwise</b>, in the order data is created in real life. <b>Click a node</b> to see its fields; click its <b>+ circle</b> to open the records it links to. <b>Expand all</b> shows the whole flow. Teal italic values are calculated, never stored.</p>
+<button id="ea">Expand all</button><button id="ca">Collapse</button><button id="zo">Zoom −</button><button id="zi">Zoom +</button>
+<div class="map" id="mp"><svg id="svg"></svg></div>
+<h2 style="font-size:16px;margin:18px 0 4px" id="ct"></h2><p>Click a collection to jump to it in the map.</p><div class="chips" id="ch"></div>
+<div id="pn"><div class="w"><button id="x">Close</button><div id="pc"></div></div></div>
+</main>
+<script>
+const col=g=>`hsl(${g*36+205} 55% 42%)`;
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const n=(c,g,t,f,k=[],v="")=>({c,g,t,f,k,v}),b=(t,k,g=8)=>({cat:1,t,k,g});
+const T=n("students",0,"Anjali Nair · STU-2025-0142",{full_name:"Anjali Nair",phone:"98470 12345",dob:"2003-05-14",address:"{ city: Kochi, state: Kerala, pincode: 682301 }",emergency_contact:"{ Suresh Nair, father, 98950 54321 }",status:"alumni",tc_accepted_at:"2025-08-04 10:12"},[
+b("Identity & documents",[
+ n("users",0,"anjali.nair@example.com",{role_id:"→ roles: Student",status:"active",last_login_at:"2026-10-05 08:41"},[n("roles",0,"Student",{name:"Student",permissions:"[ me.attendance.read, me.assignments.submit, me.fees.read, me.documents.upload ]"},[],"role_id")],"user_id"),
+ n("student_documents",7,"ID proof · aadhaar.pdf",{doc_type:"id_proof",file:"{ storage_key: docs/142/aadhaar.pdf, mime: application/pdf, size: 210 KB }",uploaded_by:"→ users: Admissions"},[],"student_id"),
+ n("student_documents",7,"Resume · anjali_resume.pdf",{doc_type:"resume",file:"{ storage_key: docs/142/resume.pdf, size: 96 KB }"},[],"student_id")],0),
+b("Enrolment, program & batches",[
+ n("enrollments",2,"CDIS · admitted 2025-08-04",{admission_date:"2025-08-04",status:"completed",completed_at:"2026-04-30"},[
+  n("programs",1,"CDIS",{code:"CDIS",status:"active"},[
+   n("program_curriculum",1,"Linux Administration · #1",{sequence_no:"1"},[n("curriculum_items",1,"Linux Administration",{description:"Shell, users, permissions, services"},[],"curriculum_item_id")],"program_id"),
+   n("program_curriculum",1,"Docker · #2",{sequence_no:"2"},[n("curriculum_items",1,"Docker",{description:"Images, containers, compose"},[],"curriculum_item_id")],"program_id")],"program_id"),
+  n("batch_enrollments",2,"CDIS-25-08 (closed)",{from_date:"2025-08-04",to_date:"2025-09-15"},[
+   n("batches",1,"CDIS-25-08",{code:"CDIS-25-08",start_date:"2025-08-04",status:"completed"},[n("batch_programs",1,"serves CDIS",{program_id:"→ programs: CDIS"},[],"batch_id")],"batch_id")],"enrollment_id"),
+  n("batch_enrollments",2,"CDIS-25-09 (transferred in)",{from_date:"2025-09-16",to_date:"2026-04-30","~current batch":"none (program completed)"},[
+   n("batches",1,"CDIS-25-09",{code:"CDIS-25-09",start_date:"2025-09-08",status:"completed"},[],"batch_id")],"enrollment_id")],"student_id")]),
+b("Attendance",[
+ n("attendance_records",2,"Present · Linux · 2025-09-03",{status:"present",marked_at:"2025-09-03 10:05",source:"manual",marked_by:"→ users: John"},[
+  n("sessions",1,"Linux session · CDIS-25-08",{session_type:"class",starts_at:"2025-09-03 10:00",ends_at:"2025-09-03 12:00",status:"held"},[
+   n("curriculum_items",1,"Linux Administration",{},[],"curriculum_item_id"),n("staff",0,"John · Trainer",{employee_code:"EMP-014",designation:"Trainer"},[],"trainer_id"),n("rooms",1,"Lab 2",{type:"lab",capacity:"30"},[],"room_id"),n("batches",1,"CDIS-25-08",{},[],"batch_id")],"session_id")],"student_id"),
+ n("attendance_records",2,"Present · Docker · 2025-09-10 (cross-batch)",{status:"present",source:"bulk","note":"Student was in CDIS-25-08, session belongs to CDIS-25-09; no extra field needed"},[
+  n("sessions",1,"Docker session · CDIS-25-09",{starts_at:"2025-09-10 10:00",status:"held"},[n("batches",1,"CDIS-25-09",{},[],"batch_id")],"session_id")],"student_id"),
+ n("policy_rules",8,"Rule: min_attendance_pct = 90",{key:"min_attendance_pct",value:"90",description:"Below this, Student Success is alerted","~student_attendance_pct":"91% (118 of 130 sessions)"},[],"read by reports")],2),
+b("Assessment",[
+ n("exam_results",3,"Linux Mid-test · 72 / 100",{attempt_no:"1",marks:"72",remarks:"Good command usage","~percentage":"72%","~result":"pass (pass_marks 40)"},[
+  n("exams",3,"Linux Mid-test",{starts_at:"2025-09-20",max_marks:"100",pass_marks:"40"},[n("curriculum_items",1,"Linux Administration",{},[],"curriculum_item_id")],"exam_id")],"student_id"),
+ n("mock_interviews",3,"Technical mock · 2026-07-10",{type:"technical",technical_area:"Kubernetes",scores:"[ Communication 7, Problem solving 8, Fundamentals 7 ]",strengths:"Clear explanations",weaknesses:"Networking depth",recommendations:"Practice CNI topics","~total_score":"22 / 30"},[n("staff",0,"Ravi · Mock interviewer",{},[],"interviewer_id")],"student_id")],3),
+b("Fees",[
+ n("fee_plans",4,"Installment plan",{program_fee:"100000",discount:"10000",gst_percent:"18",plan_type:"installment","~payable":"106200","~paid":"106200","~balance":"0"},[
+  n("fee_installments",4,"#1 · 40,000 · due 2025-08-04",{seq:"1",amount:"40000","~status":"paid"},[n("payments",4,"Receipt RC-0091 · 40,000",{method:"upi",reference_no:"UPI-882913",paid_on:"2025-08-04",status:"realized",recorded_by:"→ users: Finance"},[],"installment_id")],"fee_plan_id"),
+  n("fee_installments",4,"#2 · 40,000 · due 2025-09-04",{seq:"2",amount:"40000","~status":"paid"},[n("payments",4,"Receipt RC-0112 · 40,000",{method:"cash",paid_on:"2025-09-06",status:"realized"},[],"installment_id")],"fee_plan_id"),
+  n("fee_installments",4,"#3 · 26,200 · due 2025-10-04",{seq:"3",amount:"26200","~status":"paid"},[n("payments",4,"Receipt RC-0140 · 26,200",{method:"bank",paid_on:"2025-10-03",status:"realized"},[],"installment_id")],"fee_plan_id")],"enrollment_id")],4),
+b("Internship & placement",[
+ n("internships",5,"Acme Cloud · DevOps internship",{start_date:"2026-05-04",end_date:"2026-07-31",status:"completed",performance_rating:"4.4",review:"Reliable and quick learner"},[
+  n("companies",5,"Acme Cloud",{industry:"Cloud services",contact_email:"hr@acmecloud.example"},[],"company_id"),
+  n("staff",0,"Meera · Mentor",{},[],"mentor_id"),
+  n("assignments",3,"Project: Deploy a 3-tier app on Kubernetes",{kind:"project",deadline:"2026-06-15",max_score:"50"},[
+   n("assignment_submissions",3,"Attempt 1 · 42 / 50",{attempt_no:"1",submitted_at:"2026-06-14 18:20",repo_link:"github.com/anjali/k8s-3tier",status:"reviewed",score:"42",feedback:"Add health probes","~late":"no"},[],"assignment_id"),n("assignment_targets",3,"Assigned to Anjali Nair",{student_id:"→ students: Anjali Nair",note:"Internship task given to selected students"},[],"assignment_id")],"internship_id")],"enrollment_id"),
+ n("placement_profiles",5,"Skills & preferences",{skills:"[ Linux, Docker, Kubernetes, Git ]",preferred_roles:"[ DevOps Engineer ]",resume_doc_id:"→ student_documents: resume"},[],"student_id"),
+ n("placement_applications",5,"Applied · Orbit Systems drive",{applied_at:"2026-08-02",status:"offered"},[
+  n("placement_drives",5,"Orbit Systems drive · 2026-08-10",{drive_date:"2026-08-10",status:"completed"},[n("job_openings",5,"DevOps Engineer · 3 positions",{status:"closed"},[n("companies",5,"Orbit Systems",{industry:"IT services"},[],"company_id")],"job_opening_id")],"drive_id"),
+  n("application_rounds",5,"Round 1 · Test",{type:"test",scheduled_at:"2026-08-10 10:00",result:"passed"},[],"application_id"),
+  n("application_rounds",5,"Round 2 · Interview",{type:"interview",scheduled_at:"2026-08-12 14:00",result:"passed",feedback:"Strong fundamentals"},[],"application_id"),
+  n("offers",5,"Offer · 5.2 LPA",{offered_on:"2026-08-18",package_lpa:"5.2",status:"accepted",joining_date:"2026-09-01",joined_on:"2026-09-01"},[],"application_id")],"student_id")],5),
+b("Student success",[
+ n("followups",6,"Resume update · placement team",{kind:"call",category:"placement",notes:"Add internship project to resume",due_at:"2026-07-20",status:"done",completed_at:"2026-07-19",assigned_to:"→ staff: Placement officer"},[],"student_id"),
+ n("student_feedback",6,"Trainer feedback · John",{kind:"trainer",rating:"5",comment:"Very clear labs",trainer_id:"→ staff: John"},[],"student_id"),
+ n("staff_feedback",6,"Staff to student",{category:"communication",strengths:"Confident presenter",improvements:"Answer more concisely",given_by:"→ staff: Ravi"},[],"student_id")],6),
+b("Restricted records (separate access)",[
+ n("grievances",6,"Lab AC not working · resolved",{category:"facilities",is_confidential:"false",status:"resolved",resolution:"AC repaired 2025-09-12",assigned_to:"→ staff: Operations"},[
+  n("grievance_messages",6,"Student message",{message:"The AC in Lab 2 is off since Monday",sent_at:"2025-09-09 15:10"},[],"grievance_id"),
+  n("grievance_messages",6,"Staff reply",{message:"Maintenance has been scheduled",sent_at:"2025-09-10 09:30"},[],"grievance_id")],"student_id"),
+ n("disciplinary_records",6,"Repeated lateness · warning",{incident_date:"2025-10-14",category:"punctuality",description:"Late 4 times in two weeks",action:"Written warning",status:"closed",recorded_by:"→ staff: Academic coordinator"},[],"student_id")],6),
+b("Messages & certificates",[
+ n("notifications",7,"Fee reminder · email",{template_id:"→ notification_templates: fee_reminder",params:"{ installment: 3, due: 2025-10-04 }",status:"delivered",sent_at:"2025-10-01 09:00"},[n("notification_templates",7,"fee_reminder",{code:"fee_reminder",channel:"email",subject:"Installment due",body:"Dear {{name}}, installment {{seq}} is due on {{due}}.",active:"true"},[],"template_id")],"user_id"),
+ n("announcements",7,"Holiday notice · 2025-10-20",{title:"No classes on 20 Oct",scope:"batch",published_by:"→ staff: Academic head",published_at:"2025-10-15"},[n("announcement_audiences",7,"Audience: CDIS-25-09",{batch_id:"→ batches: CDIS-25-09",program_id:"null",student_id:"null"},[],"announcement_id")],"batch audience"),
+ n("certificates",7,"Program certificate · CERT-2026-0310",{type:"program",issued_on:"2026-05-10",verification_code:"K7P2-91XQ",issued_by:"→ staff: Academic head"},[],"student_id"),
+ n("certificates",7,"Internship certificate · CERT-2026-0488",{type:"internship",issued_on:"2026-08-05"},[],"student_id")],7),
+b("Audit trail",[
+ n("audit_logs",8,"Batch transfer · 2025-09-16",{event:"batch.transfer",entity:"{ batch_enrollments, 66f2… }",actor_id:"→ users: Academic coordinator",before:"{ batch: CDIS-25-08 }",after:"{ batch: CDIS-25-09 }",reason:"Missed Docker block; moved to a later batch"},[],"student_id"),
+ n("audit_logs",8,"Result entry · Linux Mid-test",{event:"exam_result.create",actor_id:"→ users: John",at:"2025-09-22 16:40"},[],"student_id")],8)
+]);
+
+const CN=["Identity & documents","Enrolment & batches","Fees","Attendance","Assessment","Internship & placement","Student success","Restricted records","Messages & certificates","Audit trail"];
+const cats=[0,1,4,2,3,5,6,7,8,9].map(i=>T.k[i]);
+const NL=[],RH=40,dist=d=>d===1?190:405+(d-2)*250,half=x=>x.cat?75:110;
+function setup(x,par,ci){x.par=par;x.ci=ci;x.open=!!x.cat||false;if(!x.cat)x.title=x.t;NL.push(x);x.k.forEach(y=>setup(y,x,ci))}
+cats.forEach((c,i)=>{c.t=(i+1)+" · "+CN[i];setup(c,null,i)});cats.forEach(c=>c.open=true);
+const rows=x=>x.open&&x.k.length?x.k.reduce((a,y)=>a+rows(y),0):1;
+let maxD,z=1,selN=null;
+function place(x,y0,s,d){const r=rows(x);x.y=y0+r*RH/2;x.s=s;x.d=d;x.vis=true;maxD=Math.max(maxD,d);if(x.open&&x.k.length){let y=y0;x.k.forEach(c=>{place(c,y,s,d+1);y+=rows(c)*RH})}}
+const svg=document.getElementById("svg"),mp=document.getElementById("mp");
+function render(){NL.forEach(x=>x.vis=false);maxD=1;let yR=24,yL=24;
+ cats.forEach((c,i)=>{if(i<5){place(c,yR,1,1);yR+=rows(c)*RH+14}});
+ [9,8,7,6,5].forEach(i=>{const c=cats[i];place(c,yL,-1,1);yL+=rows(c)*RH+14});
+ const H=Math.max(yR,yL)+10,W=2*(dist(maxD)+(maxD===1?85:125)+10),cx=W/2,ry=H/2;
+ svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("width",W*z);svg.setAttribute("height",H*z);
+ let e="",n="";
+ const X=x=>cx+x.s*dist(x.d);
+ NL.filter(x=>x.vis).forEach(x=>{const k=col(x.ci),px=X(x),sx=x.s,hw=half(x);
+  const pa=x.par?{x:X(x.par),y:x.par.y,h:half(x.par)}:{x:cx,y:ry,h:75};
+  const x1=pa.x+sx*pa.h,x2=px-sx*hw,m=(x1+x2)/2;
+  e+=`<path class="t" style="stroke:${k}" d="M${x1},${pa.y} C${m},${pa.y} ${m},${x.y} ${x2},${x.y}"/>`;
+  const i=NL.indexOf(x),tg=x.k.length?`<g class="tg" data-t="${i}"><circle cx="${px+sx*hw}" cy="${x.y}" r="9" fill="var(--card)" stroke="${k}" stroke-width="1.6"/><text x="${px+sx*hw}" y="${x.y+4}" text-anchor="middle" style="font-weight:700">${x.open?"−":x.k.length}</text></g>`:"";
+  if(x.cat)n+=`<g class="nd tg" data-t="${i}"><rect x="${px-75}" y="${x.y-15}" width="150" height="30" rx="15" fill="${k}"/><text x="${px}" y="${x.y+4}" text-anchor="middle" style="fill:#fff;font-weight:700">${esc(x.t.length>24?x.t.slice(0,23)+"…":x.t)}</text></g>`;
+  else n+=`<g class="nd ${x===selN?"sel":""}" data-n="${i}"><rect x="${px-110}" y="${x.y-17}" width="220" height="34" rx="7" fill="${k}" fill-opacity=".13" stroke="${k}"/><text class="m" x="${px-103}" y="${x.y-4}" style="fill:${k}">${x.c}</text><text x="${px-103}" y="${x.y+10}">${esc(x.t.length>36?x.t.slice(0,35)+"…":x.t)}</text></g>${tg}`});
+ const root=`<ellipse cx="${cx}" cy="${ry}" rx="75" ry="30" fill="var(--fg)"/><text x="${cx}" y="${ry-2}" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:13px">Anjali Nair</text><text class="m" x="${cx}" y="${ry+12}" text-anchor="middle" style="fill:var(--bg)">students</text>`;
+ svg.innerHTML=e+`<g class="nd" data-n="root">${root}</g>`+n;
+ svg.querySelectorAll("[data-t]").forEach(g=>g.onclick=ev=>{ev.stopPropagation();const x=NL[g.dataset.t];x.open=!x.open;render()});
+ svg.querySelectorAll("[data-n]").forEach(g=>g.onclick=()=>show(g.dataset.n==="root"?T:NL[g.dataset.n]));
+ return{cx,H}}
+function show(x){selN=x===T?null:x;const k=col(x===T?0:x.ci);
+ document.getElementById("pc").innerHTML=`<div style="font-weight:600"><span class="pill" style="background:${k}">${x.c}</span>${esc(x.t)}${x.v?`<span class="via">via ${x.v}</span>`:""}</div><dl>${Object.entries(x.f).map(([a,v])=>{const q=a[0]==="~";return`<dt class="${q?"d":""}">${esc(q?a.slice(1):a)}</dt><dd class="${q?"d":""}">${esc(v)}</dd>`}).join("")}</dl>${x.k&&x.k.length&&x!==T?`<p>Linked records: ${[...new Set(x.k.map(y=>y.c))].join(", ")}</p>`:""}${x.par&&x.par.c?`<p>Parent: ${x.par.c} · ${esc(x.par.t)}</p>`:""}`;
+ document.getElementById("pn").style.display="block";render()}
+const names="users roles students staff programs curriculum_items program_curriculum batches batch_programs rooms sessions enrollments batch_enrollments attendance_records policy_rules assignments assignment_targets assignment_submissions exams exam_results mock_interviews fee_plans fee_installments payments companies job_openings placement_drives placement_profiles placement_applications application_rounds offers internships followups student_feedback staff_feedback disciplinary_records grievances grievance_messages notification_templates notifications announcements announcement_audiences student_documents certificates audit_logs".split(" ");
+const first={};NL.forEach(x=>{if(!x.cat&&!first[x.c])first[x.c]=x});
+const have=names.filter(c=>c==="students"||first[c]);
+document.getElementById("ct").textContent=have.length+" of "+names.length+" collections appear in this demonstration";
+document.getElementById("ch").innerHTML=names.map(c=>{const x=first[c],ok=c==="students"||x;return`<span data-c="${c}" style="background:${ok?col(x?x.ci:0):"transparent"};${ok?"":"color:var(--mut)"}">${c}</span>`}).join("");
+document.getElementById("ch").onclick=e=>{const c=e.target.dataset.c;if(!c)return;const x=first[c];if(!x){show(T);return}let p=x.par;while(p){p.open=true;p=p.par}show(x);
+ const g=svg.querySelector(`[data-n="${NL.indexOf(x)}"]`);if(g){const r=g.getBoundingClientRect(),m=mp.getBoundingClientRect();mp.scrollLeft+=r.left-m.left-m.width/2+r.width/2;mp.scrollTop+=r.top-m.top-m.height/2;window.scrollTo({top:mp.offsetTop-10,behavior:"smooth"})}};
+document.getElementById("ea").onclick=()=>{NL.forEach(x=>x.open=true);render()};
+document.getElementById("ca").onclick=()=>{NL.forEach(x=>x.open=!!x.cat);render()};
+document.getElementById("zi").onclick=()=>{z=Math.min(1.6,z+.15);render()};document.getElementById("zo").onclick=()=>{z=Math.max(.35,z-.15);render()};
+document.getElementById("x").onclick=()=>{selN=null;document.getElementById("pn").style.display="none";render()};
+const r0=render();z=Math.max(.6,Math.min(1,mp.clientWidth/(2*(dist(2)+135)))); render();mp.scrollLeft=(mp.scrollWidth-mp.clientWidth)/2;
+</script></body></html>
