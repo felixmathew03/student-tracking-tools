@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synnefo Sprint Plan</title>
+<link rel="stylesheet" href="../assets/style.css"></head><body><main>
+<h1>Synnefo Platform: Sprint Plan</h1>
+<p>11 sprints (S0 to S10), each a vertical slice: <b>schema → backend API → UI → something you can open and demo</b>. Assumed 2-week sprints (about 22 weeks) for a small team; scale up or down to match your actual team. Tick a sprint when done to track progress.</p>
+<div class="bar" id="bar"></div><div class="prog"><i id="pg"></i></div><span id="pt" style="font-size:13px;color:var(--mut)"></span>
+
+<h2>How every module is built</h2>
+<div class="grid">
+<div class="card"><b>1. Schema</b><p>Mongoose models, validators, indexes (from the schema page), seed data.</p></div>
+<div class="card"><b>2. Backend</b><p>Routes, controller, service, Zod validation, permission check, audit hook, tests.</p></div>
+<div class="card"><b>3. UI</b><p>Screens from the UI map, API hooks, loading/empty/error states, role guard.</p></div>
+<div class="card"><b>4. Demo</b><p>Seeded sample data and a demo script, so each sprint ends with something visible.</p></div>
+</div>
+
+<h2>Suggested stack</h2>
+<ul>
+<li><b>Frontend:</b> React (Vite), React Router, TanStack Query, Tailwind, React Hook Form + Zod.</li>
+<li><b>Backend:</b> Node + Express, Mongoose, Zod, JWT in httpOnly cookies, role/permission middleware.</li>
+<li><b>Services:</b> S3 or Cloudflare R2 for files, email via SES/Resend/Nodemailer, scheduled jobs with node-cron (BullMQ if volume grows), PDF receipts and certificates.</li>
+<li><b>Quality:</b> Vitest/Jest + Supertest, ESLint, GitHub Actions, MongoDB Atlas (dev/staging/prod).</li>
+<li><b>Folders:</b> <code>server/src/modules/&lt;domain&gt;/{model,routes,controller,service}</code> and <code>client/src/features/&lt;domain&gt;/{pages,components,api}</code>, one folder per domain, matching the module groups.</li>
+</ul>
+
+<h2>Sprints</h2>
+<div id="list"></div>
+
+<h2>Definition of done (every sprint)</h2>
+<ul>
+<li>Models have indexes and unique constraints from the schema page; no derived values stored.</li>
+<li>Every endpoint checks permissions; sensitive changes write to <code>audit_logs</code> with a reason.</li>
+<li>Screens work on mobile for the student portal and desktop for staff, with empty, loading and error states.</li>
+<li>Seed data and a short demo script exist; tests cover the main rules of the sprint.</li>
+</ul>
+
+<h2>Key risks to watch</h2>
+<ul>
+<li><b>Attendance and batch transfer rules (S2, S3):</b> test that a transfer never changes old attendance and that cross-batch attendance works.</li>
+<li><b>Money (S5):</b> use Decimal128, make payments immutable, and test installment status calculations.</li>
+<li><b>Email delivery (S6):</b> set up the sending domain early (SPF/DKIM) since it can take days to verify.</li>
+<li><b>Real data (S10):</b> plan the import of existing students and fees well before go-live.</li>
+</ul>
+</main>
+<script>
+const S=[
+{n:0,t:"Foundation",g:"Project skeleton, login, roles and the shell every later screen sits in.",c:["users","roles","policy_rules","audit_logs"],a:["Auth (login, logout, refresh)","RBAC middleware","Audit logger utility","Policy rules CRUD","File upload service (signed URLs)"],u:["Login","App shell (role sidebar, top bar)","Users","Roles & Permissions","Policy Rules","Audit Log"],d:"Log in as each role and see a different sidebar; create a user; edit a policy rule and see it in the audit log."},
+{n:1,t:"Students & Academic Setup",g:"The master data everything else refers to.",c:["students","staff","programs","curriculum_items","program_curriculum","batches","batch_programs","rooms"],a:["Students and staff CRUD + search","Programs, curriculum, batches (multi-program)","Rooms CRUD"],u:["Students list","Programs","Program Detail","Batches","Batch Detail (basic)","Rooms & Labs"],d:"Create CDIS and MERN programs with curriculum, a shared Frontend batch for two programs, and a student list you can search."},
+{n:2,t:"Enrollment & Batch History",g:"Admission and the historical batch relationship.",c:["enrollments","batch_enrollments"],a:["Admission service (user + student + enrollment + batch)","Batch transfer service (close row, open row, audit)","Rule: batch must serve the student's program"],u:["Admission Wizard (identity, program, batch)","Student 360 (overview, batch history)","Batch Transfer modal"],d:"Admit a student, transfer them between batches and see both rows in the batch history with dates.",m:"Check: only one open batch row per enrollment"},
+{n:3,t:"Timetable & Attendance",g:"Sessions and attendance tied to the actual session.",c:["sessions","attendance_records"],a:["Session CRUD with trainer/room conflict detection","Attendance marking (manual, bulk, cross-batch)","Correction with reason + audit","Attendance % from policy rules"],u:["Timetable","Mark Attendance","Attendance Reports","Student 360 attendance tab","My Attendance (student)","Trainer Dashboard"],d:"Schedule a week, mark attendance, add a student from another batch, transfer a student and show old attendance unchanged.",m:"Milestone 1: core academic operations demo"},
+{n:4,t:"Assessments",g:"Assignments, projects, exams and results.",c:["assignments","assignment_targets","assignment_submissions","exams","exam_results"],a:["Assignment CRUD (batch or selected students)","Submission, review, resubmission, late calculation","Exam CRUD, result entry with attempts","Result-change audit"],u:["Assignments & Projects","Assignment Detail (review)","Exams","Result Entry","My Assignments","My Exams","Student 360 tabs"],d:"Create an assignment, submit as a student, review and score it; enter exam results and view them in the student portal."},
+{n:5,t:"Fees & Payments",g:"Fixed fee plan, installments and immutable payments.",c:["fee_plans","fee_installments","payments"],a:["Fee plan + installment generation","Record payment against one installment","Derived status (paid, pending, overdue)","Receipt PDF"],u:["Fees step in Admission Wizard","Fees Overview","Student Fees (record payment, receipt)","My Fees","Finance Dashboard"],d:"Admit a student with 3 installments, record a payment, download a receipt and see overdue list for finance."},
+{n:6,t:"Notifications & Dashboards",g:"Email, announcements and the dashboards. Completes P0.",c:["notification_templates","notifications","announcements","announcement_audiences"],a:["Template engine + email sender","Triggers: attendance, assignment, exam, fee, batch change","Scheduled reminders (due, overdue, deadlines)","Announcements by institute, program, batch, students"],u:["Announcements","Templates","Notification Log","My Notifications","Admin Dashboard","My Dashboard (student)"],d:"Trigger a fee reminder and a batch-change email, see status in the log, and view all dashboards.",m:"Milestone 2: P0 complete, ready for a pilot batch"},
+{n:7,t:"Mock Interviews, Feedback & Documents",g:"First P1 set.",c:["mock_interviews","student_feedback","staff_feedback","student_documents"],a:["Mock interview scheduling and scoring","Feedback both directions","Document upload and T&C acceptance (tc_accepted_at)"],u:["Mock Interviews","Interview Evaluation","Feedback","Documents & T&C (student)","Student 360 documents tab"],d:"Evaluate a mock interview, give trainer feedback as a student, upload and view a document."},
+{n:8,t:"Student Success & Restricted Records",g:"Follow-ups, grievances and conduct, with strict access.",c:["followups","grievances","grievance_messages","disciplinary_records"],a:["Follow-up workflow with reminders","Grievance thread and assignment","Conduct records with evidence","Access tests for restricted modules"],u:["Follow-ups","Grievances + Detail","Conduct Records + Detail","Feedback & Grievance (student)","Success Dashboard"],d:"Raise a grievance as a student, resolve it as staff, and confirm unauthorized roles cannot see conduct records."},
+{n:9,t:"Internship & Placement",g:"Internship tracking and the full recruitment pipeline.",c:["internships","companies","job_openings","placement_drives","placement_profiles","placement_applications","application_rounds","offers"],a:["Internship lifecycle (tasks are assignments)","Company, opening, drive CRUD","Application pipeline with rounds, offer and joining"],u:["Internships + Detail","Companies & Openings","Placement Drives","Drive Pipeline","Placement Profile","My Placement","My Internship","Placement Dashboard"],d:"Run one student from application through test, interview, offer and joining, and see it in their profile.",m:"Milestone 3: all P1 features complete"},
+{n:10,t:"Certificates, Reports & Launch",g:"Certificates, reports, hardening and go-live.",c:["certificates"],a:["Certificate numbering, PDF and verification code","Report queries and exports","Index and performance review, security review","Data import scripts, backups, deployment"],u:["Certificates","Reports Hub","Final polish across screens"],d:"Issue a certificate, verify it, export reports, then run user acceptance testing with real staff.",m:"Milestone 4: production launch"}
+];
+const k="synnefo_plan_done";let done={};try{done=JSON.parse(localStorage.getItem(k)||"{}")}catch(e){}
+const tags=a=>a.map(x=>`<span class="tag">${x}</span>`).join("");
+document.getElementById("list").innerHTML=S.map(s=>`<div class="card accent" id="s${s.n}"><label class="check"><input type="checkbox" data-n="${s.n}"> done</label><h3>Sprint ${s.n}: ${s.t}</h3><p>${s.g}</p>
+<div class="lane"><b>Schema</b><div>${tags(s.c)}</div><b>Backend</b><div>${s.a.join(" · ")}</div><b>UI</b><div>${tags(s.u)}</div><b>View output</b><div>${s.d}</div></div>${s.m?`<div class="note">${s.m}</div>`:""}</div>`).join("");
+function upd(){const bar=document.getElementById("bar");bar.innerHTML=S.map(s=>`<a href="#s${s.n}" class="${done[s.n]?"done":""} ${s.m&&s.m.startsWith("Milestone")?"ms":""}">S${s.n}</a>`).join("");
+const c=S.filter(s=>done[s.n]).length;document.getElementById("pg").style.width=(c/S.length*100)+"%";document.getElementById("pt").textContent=c+" of "+S.length+" sprints done. Underlined = milestone."}
+document.querySelectorAll("input[data-n]").forEach(i=>{i.checked=!!done[i.dataset.n];i.onchange=()=>{done[i.dataset.n]=i.checked;try{localStorage.setItem(k,JSON.stringify(done))}catch(e){}upd()}});
+upd();
+</script><script src="../assets/site.js" data-root=".."></script>
+</body></html>

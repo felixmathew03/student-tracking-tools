@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synnefo UI Structure</title>
+<link rel="stylesheet" href="../assets/style.css"></head><body><main>
+<h1>Synnefo Platform: UI Structure &amp; Navigation Map</h1>
+<p>Every screen, who can open it, what it contains, where it navigates to, and which collections it reads or writes. Pick a role to see its sidebar and filter the map.</p>
+<select id="role"></select><span id="cnt"></span>
+
+<h2>Mind map</h2>
+<p>Branches show where each screen lives. Hover or tap a screen to draw its navigation links: <b>solid-dash with a dot</b> = where it goes to, faded dashes = screens that come to it. Click to jump to its details.</p>
+<div class="mm"><svg id="svg"></svg></div>
+
+<h2>Sidebar for selected role</h2>
+<div class="grid sm" id="sb"></div>
+
+<h2>Shared UI building blocks</h2>
+<ul>
+<li><b>App shell:</b> role-based sidebar, top bar with global student search, notification bell, profile menu. Mobile-first layout for the student portal, desktop-first for staff.</li>
+<li><b>List page:</b> search + filters + table + pagination + "Create" button (opens a modal or drawer; no separate form pages).</li>
+<li><b>Detail page with tabs:</b> Student 360, Batch Detail, Drive Pipeline.</li>
+<li><b>Reason dialog:</b> required for attendance corrections, result changes, batch transfers, payment corrections. It writes to the audit log.</li>
+<li><b>Route guard:</b> checks the role's permission keys; restricted screens (conduct, grievances) are hidden from the sidebar for other roles.</li>
+<li><b>Common widgets:</b> status badge, file uploader (signed URL), confirmation dialog, empty state, toast.</li>
+</ul>
+
+<h2>Screens</h2>
+<input id="q" placeholder="Filter screens..."><div id="list"></div>
+</main>
+<script>
+const R={A:"Super Admin",M:"Management",C:"Academic Team",T:"Trainer",S:"Student Success",P:"Placement Team",F:"Finance",U:"Student"};
+const M=["Auth","Dashboards","Students","Academic","Attendance","Assessment","Finance","Career","Student Success","Comms & Docs","Admin","Student Portal"];
+const D=[
+["login",0,"Login","/login","AMCTSPFU","Email + password, forgot password, redirect by role",["dash_adm","dash_tr","dash_ss","dash_pl","dash_fn","s_home"],"users, roles"],
+["dash_adm",1,"Admin Dashboard","/dashboard","AMC","KPI cards: active students, batch strength, attendance, fees, placement; recent audit events",["stu_list","batch_list","fee_over","att_rep","reports"],"students, batches, payments"],
+["dash_tr",1,"Trainer Dashboard","/dashboard","T","Today's sessions, pending submissions, upcoming exams",["timetable","att_mark","asg_d","exam_res"],"sessions, assignment_submissions"],
+["dash_ss",1,"Success Dashboard","/dashboard","S","Follow-ups due, low-attendance students, open grievances",["fu_list","stu_list","griev_list"],"followups, attendance_records"],
+["dash_pl",1,"Placement Dashboard","/dashboard","P","Upcoming drives, applications by stage, follow-ups, mock schedule",["drive_list","fu_list","mock_list"],"placement_drives, placement_applications"],
+["dash_fn",1,"Finance Dashboard","/dashboard","F","Due today, overdue list, collections",["fee_over","stu_fees"],"fee_installments, payments"],
+["stu_list",2,"Students","/students","AMCSPF","Search, filters (program, batch, status), table, export",["stu_new","stu_360"],"students, enrollments, batch_enrollments"],
+["stu_new",2,"Admission Wizard","/students/new","AMC","Steps: identity, program, batch, fee plan + installments, documents, T&C",["stu_360"],"students, users, enrollments, fee_plans, fee_installments"],
+["stu_360",2,"Student 360","/students/:id","AMCTSPF","Header + tabs: Overview, Academic, Attendance, Assignments, Exams, Mock, Finance, Documents, Placement, Internship, Timeline",["batch_tr","stu_fees","pl_prof","intern_d","fu_list","cert_list","disc_d","att_rep"],"read by student_id across modules"],
+["batch_tr",2,"Batch Transfer (modal)","/students/:id/transfer","AMC","Current batch, new batch (same program), effective date, reason",["stu_360"],"batch_enrollments, audit_logs"],
+["prog_list",3,"Programs","/programs","AMC","Program table, create/edit modal",["prog_d"],"programs"],
+["prog_d",3,"Program Detail","/programs/:id","AMC","Ordered curriculum items, linked batches",["batch_list"],"program_curriculum, curriculum_items"],
+["batch_list",3,"Batches","/batches","AMCTS","Table by program/status, create modal (one or many programs)",["batch_d"],"batches, batch_programs"],
+["batch_d",3,"Batch Detail","/batches/:id","AMCTS","Tabs: Students (with batch history), Sessions, Attendance, Assignments, Exams",["stu_360","timetable","asg_list","exam_list","att_rep"],"batch_enrollments, sessions"],
+["timetable",3,"Timetable","/timetable","AMCT","Week/month calendar, filters (batch, trainer, room), session modal, conflict warnings",["att_mark","rooms"],"sessions, rooms"],
+["rooms",3,"Rooms & Labs","/rooms","AMC","Room list, capacity, status",["timetable"],"rooms"],
+["att_mark",4,"Mark Attendance","/sessions/:id/attendance","ACT","Roster, bulk mark, add cross-batch student, correction with reason",["timetable"],"attendance_records, audit_logs"],
+["att_rep",4,"Attendance Reports","/reports/attendance","AMCS","By student, batch, program, month; thresholds from policy",["stu_360","batch_d"],"attendance_records, policy_rules"],
+["asg_list",5,"Assignments & Projects","/assignments","ACT","List, filters, create modal (targets, files, deadline)",["asg_d"],"assignments, assignment_targets"],
+["asg_d",5,"Assignment Detail","/assignments/:id","ACT","Instructions, submissions table, review panel (score, feedback, resubmission)",["stu_360"],"assignment_submissions"],
+["exam_list",5,"Exams","/exams","ACT","Exam list, create modal",["exam_res"],"exams"],
+["exam_res",5,"Result Entry","/exams/:id/results","ACT","Marks grid, attempts, computed grade",["stu_360"],"exam_results, audit_logs"],
+["mock_list",5,"Mock Interviews","/mock-interviews","ACTP","Schedule, history, filters",["mock_eval"],"mock_interviews"],
+["mock_eval",5,"Interview Evaluation","/mock-interviews/:id","ACTP","Criteria scores, strengths, weaknesses, feedback",["stu_360"],"mock_interviews"],
+["fee_over",6,"Fees Overview","/fees","AMF","Outstanding, overdue, collections, filters",["stu_fees"],"fee_installments, payments"],
+["stu_fees",6,"Student Fees","/fees/:studentId","AMFS","Plan, installments, payments, record-payment modal, receipt",["stu_360"],"fee_plans, fee_installments, payments"],
+["comp_list",7,"Companies & Openings","/companies","AMP","Company table, openings tab",["drive_list"],"companies, job_openings"],
+["drive_list",7,"Placement Drives","/drives","AMP","Drive list, create modal",["drive_d"],"placement_drives"],
+["drive_d",7,"Drive Pipeline","/drives/:id","AMP","Applications by stage, rounds, results, offer and joining",["stu_360","pl_prof"],"placement_applications, application_rounds, offers"],
+["pl_prof",7,"Placement Profile","/students/:id/placement","AMPU","Skills, preferred roles, resume, placement history",["drive_d"],"placement_profiles, placement_applications"],
+["intern_list",7,"Internships","/internships","AMCP","List by status, assign mentor/company",["intern_d"],"internships"],
+["intern_d",7,"Internship Detail","/internships/:id","AMCPT","Period, tasks (assignments), review, performance",["asg_d","cert_list"],"internships, assignments"],
+["fu_list",8,"Follow-ups","/followups","AMSP","List, filters, create/edit modal, reminders",["stu_360"],"followups"],
+["fb_list",8,"Feedback","/feedback","AMCS","Student feedback by trainer/batch/facility; staff-to-student feedback",["stu_360","batch_d"],"student_feedback, staff_feedback"],
+["griev_list",8,"Grievances","/grievances","AMS","Restricted. Queue, status, assignment",["griev_d"],"grievances"],
+["griev_d",8,"Grievance Detail","/grievances/:id","AMS","Restricted. Description, message thread, resolution",["stu_360"],"grievances, grievance_messages"],
+["disc_list",8,"Conduct Records","/conduct","AM","Restricted. Records, filters, create modal",["disc_d"],"disciplinary_records"],
+["disc_d",8,"Conduct Detail","/conduct/:id","AM","Restricted. Incident, evidence, investigation, action, resolution",["stu_360"],"disciplinary_records, audit_logs"],
+["ann_list",9,"Announcements","/announcements","AMCS","List, compose modal with audience",["notif_log"],"announcements, announcement_audiences"],
+["tmpl_list",9,"Templates","/templates","AM","Email template editor with placeholders",["notif_log"],"notification_templates"],
+["notif_log",9,"Notification Log","/notifications/log","AMS","Delivery status, retry",[],"notifications"],
+["cert_list",9,"Certificates","/certificates","AMC","Issue, list, verify code",["stu_360"],"certificates"],
+["users",10,"Users","/admin/users","A","Create users, assign role, disable",["roles"],"users"],
+["roles",10,"Roles & Permissions","/admin/roles","A","Permission checklist per module",[],"roles"],
+["policy",10,"Policy Rules","/admin/policy","AM","Attendance %, grace minutes",["att_rep"],"policy_rules"],
+["audit",10,"Audit Log","/admin/audit","AM","Filter by student, event, actor, date",["stu_360"],"audit_logs"],
+["reports",10,"Reports Hub","/reports","AMCSPF","Management, batch and student reports",["att_rep","fee_over","audit"],"read-only queries"],
+["s_home",11,"My Dashboard","/me","U","Program, batch, attendance %, pending work, upcoming sessions, fees",["s_att","s_asg","s_exam","s_fees","s_plc","s_int","s_docs","s_help","s_notif"],"own records"],
+["s_att",11,"My Attendance","/me/attendance","U","Per-session history, monthly summary",[],"attendance_records, sessions"],
+["s_asg",11,"My Assignments","/me/assignments","U","Pending, submitted, late; submit link or files",[],"assignments, assignment_submissions"],
+["s_exam",11,"My Exams","/me/exams","U","Schedule, results, mock interview history",[],"exams, exam_results, mock_interviews"],
+["s_fees",11,"My Fees","/me/fees","U","Installments, payments, receipts",[],"fee_installments, payments"],
+["s_docs",11,"Documents & T&C","/me/documents","U","Upload/view documents, accepted T&C",[],"student_documents, students"],
+["s_plc",11,"My Placement","/me/placement","U","Profile, applications, interviews, offers",["pl_prof"],"placement_profiles, placement_applications"],
+["s_int",11,"My Internship","/me/internship","U","Mentor, tasks, review",["s_asg"],"internships"],
+["s_help",11,"Feedback & Grievance","/me/support","U","Give feedback, raise and track grievance",[],"student_feedback, grievances"],
+["s_notif",11,"Notifications","/me/notifications","U","Inbox and announcements",[],"notifications, announcements"]
+];
+const col=g=>`hsl(${g*30+200} 60% 48%)`,esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const by={};D.forEach(d=>by[d[0]]=d);
+const rs=document.getElementById("role");
+rs.innerHTML='<option value="">All roles</option>'+Object.entries(R).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
+// cards
+const list=document.getElementById("list");
+function draw(){const r=rs.value,q=document.getElementById("q").value.toLowerCase();let n=0;
+list.innerHTML=D.filter(d=>(!r||d[4].includes(r))&&(d[2]+d[3]+d[5]+d[7]).toLowerCase().includes(q)).map(d=>{n++;
+return`<div class="card accent" id="s-${d[0]}" style="border-left-color:${col(d[1])}"><h3>${d[2]} <code>${d[3]}</code></h3><p>${esc(d[5])}</p>
+<div>${[...d[4]].map(x=>`<span class="tag">${R[x]}</span>`).join("")}</div>
+<p><b>Goes to:</b> ${d[6].length?d[6].map(x=>`<a class="ref" href="#s-${x}">${by[x][2]}</a>`).join(", "):"end of flow"}</p>
+<p><b>Collections:</b> ${esc(d[7])}</p></div>`}).join("");
+document.getElementById("cnt").textContent=n+" screens";
+const sb=document.getElementById("sb");
+sb.innerHTML=r?M.map((m,i)=>{const s=D.filter(d=>d[1]===i&&d[1]>0&&d[4].includes(r));return s.length?`<div class="card"><h4>${m}</h4>${s.map(d=>`<a class="item" href="#s-${d[0]}">${d[2]}</a>`).join("")}</div>`:""}).join(""):'<p>Select a role above.</p>';
+document.querySelectorAll(".mm-node").forEach(g=>g.classList.toggle("off",!!r&&!by[g.dataset.n][4].includes(r)))}
+
+// map: classic two-sided mind map
+const cx=500,RH=24,GAP=14,pos={},mods={};
+const side=(ms,s)=>{let y=40;ms.forEach(mi=>{const ls=D.filter(d=>d[1]===mi),top=y;ls.forEach((d,i)=>{pos[d[0]]={x:cx+s*330,y:top+i*RH+RH/2,s}});mods[mi]={x:cx+s*150,y:top+ls.length*RH/2,s};y=top+ls.length*RH+GAP});return y};
+const H=Math.max(side([0,1,2,3,4,5,6],-1),side([7,8,9,10,11],1))+10,ry=H/2;
+const svg=document.getElementById("svg");svg.setAttribute("viewBox",`0 0 1000 ${H}`);svg.setAttribute("width",1000);svg.setAttribute("height",H);
+const cv=(x1,y1,x2,y2)=>{const m=(x1+x2)/2;return`M${x1},${y1} C${m},${y1} ${m},${y2} ${x2},${y2}`};
+let h="";
+M.forEach((g,i)=>{const m=mods[i];h+=`<path class="mm-edge" style="stroke:${col(i)}" d="${cv(cx+m.s*55,ry,m.x-m.s*56,m.y)}"/>`;
+D.filter(d=>d[1]===i).forEach(d=>{const p=pos[d[0]];h+=`<path class="mm-edge" style="stroke:${col(i)}" d="${cv(m.x+m.s*56,m.y,p.x-p.s*85,p.y)}"/>`})});
+h+=`<g><rect x="${cx-55}" y="${ry-18}" width="110" height="36" rx="18" fill="var(--fg)"/><text x="${cx}" y="${ry+4}" text-anchor="middle" style="fill:var(--bg);font-weight:700;font-size:12px">Synnefo Platform</text></g>`;
+M.forEach((g,i)=>{const m=mods[i];h+=`<g class="mm-hub"><rect x="${m.x-56}" y="${m.y-14}" width="112" height="28" rx="14" fill="${col(i)}"/><text x="${m.x}" y="${m.y+4}" text-anchor="middle" style="fill:#fff;font-weight:700">${g}</text></g>`});
+h+='<g id="xl"></g>';
+h+=D.map(d=>{const p=pos[d[0]],t=d[2].length>24?d[2].slice(0,23)+"…":d[2];return`<g class="mm-node" data-n="${d[0]}"><rect x="${p.x-85}" y="${p.y-10}" width="170" height="20" rx="5" fill="${col(d[1])}" fill-opacity=".14" stroke="${col(d[1])}"/><text x="${p.x}" y="${p.y+4}" text-anchor="middle">${esc(t)}</text></g>`}).join("");
+svg.innerHTML=h;
+function link(a,b,cls){let d;if(a.s===b.s){const s=a.s,ax=a.x+s*85,bx=b.x+s*85;d=`M${ax},${a.y} Q${ax+s*70},${(a.y+b.y)/2} ${bx},${b.y}`}
+else d=`M${a.x-a.s*85},${a.y} Q${cx},${(a.y+b.y)/2} ${b.x-b.s*85},${b.y}`;
+return`<path class="mm-link ${cls}" d="${d}"/><circle class="mm-link ${cls}" style="fill:var(--fg)" cx="${b.s===a.s?b.x+b.s*85:b.x-b.s*85}" cy="${b.y}" r="3"/>`}
+function hl(n){svg.classList.toggle("dim",!!n);svg.querySelectorAll(".on").forEach(el=>el.classList.remove("on"));const xl=document.getElementById("xl");xl.innerHTML="";if(!n)return;
+const rel=new Set([n]);let o="";
+by[n][6].forEach(t=>{if(t!==n){rel.add(t);o+=link(pos[n],pos[t],"out")}});
+D.forEach(d=>{if(d[6].includes(n)&&d[0]!==n){rel.add(d[0]);o+=link(pos[d[0]],pos[n],"in")}});
+xl.innerHTML=o;svg.querySelectorAll(".mm-node").forEach(g=>{if(rel.has(g.dataset.n))g.classList.add("on")})}
+svg.querySelectorAll(".mm-node").forEach(g=>{g.onmouseenter=()=>hl(g.dataset.n);g.onmouseleave=()=>hl(null);g.onclick=()=>{const t=document.getElementById("s-"+g.dataset.n);if(t)t.scrollIntoView({behavior:"smooth"})}});
+rs.onchange=draw;document.getElementById("q").oninput=draw;draw();
+</script><script src="../assets/site.js" data-root=".."></script>
+</body></html>

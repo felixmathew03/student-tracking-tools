@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synnefo MongoDB Schema</title>
+<link rel="stylesheet" href="../assets/style.css"></head><body><main>
+<h1>Synnefo Student Operations Platform: MongoDB Schema</h1>
+<p>45 collections, 3NF-style normalized. Every document also has <b>_id</b>, <b>created_at</b>, <b>updated_at</b>. Field flags: <b>?</b> optional, <b>!</b> unique. Click a node to highlight its relations and jump to its table.</p>
+
+<h2>Relationship map</h2>
+<div class="mm"><svg id="svg"></svg></div>
+
+<h2>Design rules applied</h2>
+<ul>
+<li><b>Derived values are never stored:</b> final payable, paid/balance/overdue, attendance %, exam percentage/grade, late submission, current batch (the open <code>batch_enrollments</code> row), a session's program, student email (lives in <code>users</code>).</li>
+<li><b>History as relationships:</b> batch transfer closes one <code>batch_enrollments</code> row and opens another. Attendance points to <code>sessions</code> + <code>students</code> only, so transfers and cross-batch attendance never rewrite it.</li>
+<li><b>Shared batches:</b> <code>batch_programs</code> lets one batch (e.g. Frontend) serve Python Full Stack and MERN. <code>curriculum_items</code> are separate documents per program unless deliberately linked to several programs via <code>program_curriculum</code>.</li>
+<li><b>Assignments = projects:</b> one <code>assignments</code> collection with a <code>kind</code> field; internship tasks are assignments with <code>internship_id</code>.</li>
+<li><b>Embedding only for atomic owned parts</b> (address, file metadata, interview criterion scores). Sensitive domains (discipline, grievances) are separate collections for restricted access.</li>
+<li><b>Files:</b> store in private object storage (S3 / Cloudflare R2, signed URLs); MongoDB keeps only metadata (<code>file</code> = storage_key, name, mime, size).</li>
+<li><b>Auditing:</b> <code>audit_logs</code> is append-only, event-level, generic by design (the one intentional polymorphic reference). T&amp;C is static, so only <code>students.tc_accepted_at</code> is kept. Program transfer is supported by the model but the carry-forward decision collection is left out for now.</li>
+</ul>
+
+<h2>Collections</h2>
+<input id="q" placeholder="Filter collections or fields...">
+<div id="list"></div>
+</main>
+<script>
+const G=["Identity & Access","Academic Setup","Enrolment & Attendance","Assessment","Finance","Career & Internship","Student Success","Comms & Documents","Admin & Audit"];
+const S="status:enum(";
+const D=[
+[0,"users","Login identity for every person (one auth system, one role each).","email!:str;password_hash:str;role_id:oid>roles;status:enum(active|disabled);last_login_at?:date","email unique; role_id"],
+[0,"roles","Role with granular permission keys (Super Admin, Management, Academic, Trainer, Student Success, Placement, Finance, Student).","name!:str;permissions:str[] (e.g. attendance.mark)","name unique"],
+[0,"students","Long-lived student identity, independent of batch/program.","user_id!:oid>users;student_code!:str;full_name:str;phone:str;dob?:date;photo?:file;address?:obj{line1,city,state,pincode};emergency_contact?:obj{name,relation,phone};"+S+"active|completed|dropped|alumni);tc_accepted_at?:date","user_id, student_code unique; status; text(full_name)"],
+[0,"staff","Staff identity; responsibilities (trainer/mentor/interviewer) are managed outside.","user_id!:oid>users;employee_code!:str;full_name:str;phone:str;designation:str;"+S+"active|inactive)","user_id, employee_code unique"],
+[1,"programs","CDIS, CCNE, ACSP, Python Full Stack, MERN...","code!:str;name:str;description?:str;"+S+"active|archived)","code unique"],
+[1,"curriculum_items","A teachable subject. Same-named items in different programs are different documents.","name:str;description?:str","name"],
+[1,"program_curriculum","Links a curriculum item to a program with order.","program_id:oid>programs;curriculum_item_id:oid>curriculum_items;sequence_no:int","unique(program_id, curriculum_item_id)"],
+[1,"batches","Operational group, e.g. CDIS-26-08.","code!:str;start_date:date;end_date?:date;"+S+"planned|running|completed)","code unique"],
+[1,"batch_programs","Programs a batch serves (supports shared frontend batches).","batch_id:oid>batches;program_id:oid>programs","unique(batch_id, program_id)"],
+[1,"rooms","Classrooms, labs, specialized labs.","name!:str;type:enum(classroom|lab|specialized);capacity:int;"+S+"active|inactive)","name unique"],
+[1,"sessions","One actual class: one batch, curriculum item, trainer, room.","batch_id:oid>batches;curriculum_item_id:oid>curriculum_items;trainer_id:oid>staff;room_id:oid>rooms;session_type:enum(class|practical|expert|soft_skill);starts_at:date;ends_at:date;"+S+"scheduled|held|cancelled)","(batch_id, starts_at); (trainer_id, starts_at); (room_id, starts_at) for conflict checks"],
+[2,"enrollments","Admission of a student into a program.","student_id:oid>students;program_id:oid>programs;admission_date:date;completed_at?:date;"+S+"active|completed|transferred|dropped)","partial unique(student_id) where status=active"],
+[2,"batch_enrollments","Batch history. Open row (to_date null) = current batch.","enrollment_id:oid>enrollments;batch_id:oid>batches;from_date:date;to_date?:date","partial unique(enrollment_id) where to_date=null; batch_id. Rule: batch must be in batch_programs for the enrollment program."],
+[2,"attendance_records","Student attended an actual session (works for cross-batch).","session_id:oid>sessions;student_id:oid>students;"+S+"present|absent|late|leave);marked_at:date;marked_by:oid>users;source:enum(manual|bulk|rfid|biometric);remarks?:str","unique(session_id, student_id); (student_id, session_id)"],
+[3,"assignments","Assignment or project, incl. internship tasks.","title:str;instructions:str;kind:enum(assignment|project);batch_id?:oid>batches;internship_id?:oid>internships;curriculum_item_id?:oid>curriculum_items;deadline:date;max_score?:num;files?:file[];created_by:oid>staff","batch_id; internship_id; deadline"],
+[3,"assignment_targets","Selected students when not assigned to a whole batch.","assignment_id:oid>assignments;student_id:oid>students","unique(assignment_id, student_id)"],
+[3,"assignment_submissions","Each attempt by a student; late = submitted_at > deadline.","assignment_id:oid>assignments;student_id:oid>students;attempt_no:int;submitted_at:date;repo_link?:str;files?:file[];"+S+"submitted|reviewed|resubmission_requested);score?:num;feedback?:str;reviewed_by?:oid>staff;reviewed_at?:date","unique(assignment_id, student_id, attempt_no)"],
+[3,"exams","Exam/assessment for a batch and curriculum item.","title:str;curriculum_item_id:oid>curriculum_items;batch_id:oid>batches;starts_at:date;max_marks:num;pass_marks?:num","batch_id; curriculum_item_id"],
+[3,"exam_results","Result per attempt; percentage/grade are computed.","exam_id:oid>exams;student_id:oid>students;attempt_no:int;marks:num;remarks?:str;entered_by:oid>staff","unique(exam_id, student_id, attempt_no)"],
+[3,"mock_interviews","Mock interview with criteria scores; total is computed.","student_id:oid>students;interviewer_id:oid>staff;scheduled_at:date;type:enum(technical|hr|mixed);technical_area?:str;scores:obj[]{criterion,score};strengths?:str;weaknesses?:str;feedback?:str;recommendations?:str;"+S+"scheduled|completed|cancelled)","student_id; interviewer_id"],
+[4,"fee_plans","Fixed fee structure per enrollment (payable = computed).","enrollment_id!:oid>enrollments;program_fee:dec128;registration_fee?:dec128;gst_percent:dec128;discount?:dec128;scholarship?:dec128;plan_type:enum(full|installment|emi|custom)","enrollment_id unique"],
+[4,"fee_installments","Scheduled dues. Status (paid/pending/overdue) is derived.","fee_plan_id:oid>fee_plans;seq:int;due_date:date;amount:dec128","unique(fee_plan_id, seq); due_date"],
+[4,"payments","Immutable payment against exactly one installment. Corrections via status/new record, audited.","installment_id:oid>fee_installments;amount:dec128;paid_on:date;method:enum(cash|upi|card|bank|cheque);reference_no?:str;receipt_no!:str;"+S+"pending|realized|failed);recorded_by:oid>users","receipt_no unique; installment_id"],
+[5,"companies","Hiring or internship companies.","name!:str;industry?:str;contact_name?:str;contact_email?:str;website?:str","name unique"],
+[5,"job_openings","Openings from a company.","company_id:oid>companies;title:str;description?:str;positions?:int;"+S+"open|closed)","company_id"],
+[5,"placement_drives","Drive/event for an opening.","job_opening_id:oid>job_openings;drive_date:date;venue?:str;"+S+"scheduled|completed|cancelled)","job_opening_id; drive_date"],
+[5,"placement_profiles","Student placement profile.","student_id!:oid>students;skills:str[];preferred_roles:str[];resume_doc_id?:oid>student_documents","student_id unique"],
+[5,"placement_applications","Student application to a drive.","drive_id:oid>placement_drives;student_id:oid>students;applied_at:date;"+S+"applied|in_process|rejected|offered|withdrawn)","unique(drive_id, student_id); student_id"],
+[5,"application_rounds","Tests and interviews of an application.","application_id:oid>placement_applications;round_no:int;type:enum(test|interview);scheduled_at:date;result:enum(pending|passed|failed);feedback?:str","unique(application_id, round_no)"],
+[5,"offers","Offer and joining (1:1 with application).","application_id!:oid>placement_applications;offered_on:date;package_lpa:dec128;"+S+"offered|accepted|declined);joining_date?:date;joined_on?:date","application_id unique"],
+[5,"internships","One internship per enrollment, after program completion.","enrollment_id!:oid>enrollments;company_id?:oid>companies;mentor_id:oid>staff;context:str;start_date:date;end_date?:date;"+S+"ongoing|completed|terminated);performance_rating?:num;review?:str","enrollment_id unique; mentor_id"],
+[6,"followups","Calls, meetings, concerns, action items (mainly placement team).","student_id:oid>students;assigned_to:oid>staff;kind:enum(call|meeting|concern|intervention|reminder|note);category:enum(attendance|assignment|performance|placement|satisfaction|other);notes:str;due_at?:date;"+S+"open|done|cancelled);completed_at?:date","(assigned_to, status, due_at); student_id"],
+[6,"student_feedback","Student to Synnefo; one target ref is set per kind.","student_id:oid>students;kind:enum(trainer|course|batch|facility|periodic);trainer_id?:oid>staff;batch_id?:oid>batches;program_id?:oid>programs;room_id?:oid>rooms;rating:int;comment?:str","trainer_id; batch_id"],
+[6,"staff_feedback","Staff to student.","student_id:oid>students;given_by:oid>staff;category:enum(academic|technical|communication|professionalism);strengths?:str;improvements?:str;comment?:str","student_id"],
+[6,"disciplinary_records","RESTRICTED. Conduct incidents.","student_id:oid>students;incident_date:date;category:str;description:str;evidence?:file[];investigation?:str;action?:str;resolution?:str;"+S+"open|under_review|closed);recorded_by:oid>staff","student_id; status"],
+[6,"grievances","RESTRICTED. Student complaints.","student_id:oid>students;category:str;description:str;is_confidential:bool;assigned_to?:oid>staff;"+S+"open|in_progress|resolved|closed);resolution?:str","student_id; assigned_to; status"],
+[6,"grievance_messages","Conversation on a grievance.","grievance_id:oid>grievances;sender_id:oid>users;message:str;sent_at:date","(grievance_id, sent_at)"],
+[7,"notification_templates","Configurable message templates with {{placeholders}}.","code!:str;channel:enum(email|in_app);subject:str;body:str;active:bool","code unique"],
+[7,"notifications","Sent/queued messages; body = template + params.","user_id:oid>users;template_id:oid>notification_templates;params:obj;"+S+"queued|sent|delivered|failed|read);provider_ref?:str;sent_at?:date","(user_id, sent_at); status"],
+[7,"announcements","Institute, program, batch or selected-student notices.","title:str;body:str;scope:enum(institute|program|batch|students);published_by:oid>staff;published_at:date","published_at"],
+[7,"announcement_audiences","Targets for non-institute announcements.","announcement_id:oid>announcements;program_id?:oid>programs;batch_id?:oid>batches;student_id?:oid>students","announcement_id; batch_id; student_id"],
+[7,"student_documents","Uploaded documents (metadata only).","student_id:oid>students;doc_type:enum(admission|id_proof|resume|other);file:file{storage_key,name,mime,size};uploaded_by:oid>users;uploaded_at:date","(student_id, doc_type)"],
+[7,"certificates","Program, internship, workshop, participation.","certificate_no!:str;student_id:oid>students;enrollment_id?:oid>enrollments;internship_id?:oid>internships;type:enum(program|internship|workshop|participation);issued_on:date;verification_code!:str;issued_by:oid>staff","certificate_no, verification_code unique; student_id"],
+[8,"policy_rules","Configurable rules, e.g. min_attendance_pct=90, grace_minutes=5.","key!:str;value:mixed;description?:str","key unique"],
+[8,"audit_logs","Append-only event log: batch/program changes, attendance, results, fees, assignment deadlines, statuses, discipline.","event:str;entity:obj{collection,id};student_id?:oid>students;actor_id:oid>users;at:date;before?:obj;after?:obj;reason?:str","(student_id, at); (entity.id, at); (event, at)"]
+];
+const col=g=>`hsl(${g*40+200} 60% 48%)`;
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const names=new Set(D.map(d=>d[1]));
+function parse(f){return f.split(";").map(x=>{const i=x.indexOf(":");const m=x.slice(0,i).match(/^([\w.]+)([?!]*)$/);return{n:m[1],o:m[2].includes("?"),u:m[2].includes("!"),t:x.slice(i+1)}})}
+// list
+const list=document.getElementById("list");
+list.innerHTML=D.map(d=>{const rows=parse(d[3]).map(f=>{
+const r=f.t.match(/^oid>(\w+)(.*)/);
+const t=r?`ObjectId → <a class="ref" href="#t-${r[1]}">${r[1]}</a>`:esc(f.t);
+return`<tr><td>${f.n}</td><td>${t}</td><td>${f.o?"optional":"required"}${f.u?" · unique":""}</td></tr>`}).join("");
+return`<div class="card accent" id="t-${d[1]}" style="border-left-color:${col(d[0])}" data-s="${esc((d[1]+d[2]+d[3]).toLowerCase())}"><h3>${d[1]}<span class="tag">${G[d[0]]}</span></h3><p>${esc(d[2])}</p><div class="scroll"><table class="tbl"><tr><th>Field</th><th>Type</th><th>Rule</th></tr>${rows}</table></div><div class="note"><b>Indexes:</b> ${esc(d[4])}</div></div>`}).join("");
+document.getElementById("q").oninput=e=>{const v=e.target.value.toLowerCase();list.querySelectorAll(".card").forEach(c=>c.style.display=c.dataset.s.includes(v)?"":"none")};
+// map
+const W=148,pos={},cnt={};let H=0;
+D.forEach(d=>{const g=d[0];cnt[g]=(cnt[g]||0);pos[d[1]]={x:14+g*W+66,y:56+cnt[g]*40,g};cnt[g]++;H=Math.max(H,56+cnt[g]*40)});
+const svg=document.getElementById("svg");svg.setAttribute("width",G.length*W+20);svg.setAttribute("height",H+10);
+let edges=[];D.forEach(d=>parse(d[3]).forEach(f=>{const r=f.t.match(/^oid>(\w+)/);if(r&&names.has(r[1])&&r[1]!==d[1])edges.push([d[1],r[1]])}));
+edges=edges.filter((e,i)=>edges.findIndex(x=>x[0]===e[0]&&x[1]===e[1])===i);
+let h=G.map((g,i)=>`<text class="gl" x="${14+i*W+66}" y="24" text-anchor="middle" style="fill:${col(i)}">${g}</text>`).join("");
+h+=edges.map((e,i)=>{const a=pos[e[0]],b=pos[e[1]];let d;
+if(a.x===b.x){const o=a.x-76;d=`M${a.x-62},${a.y} C${o-30},${a.y} ${o-30},${b.y} ${b.x-62},${b.y}`}
+else{const s=a.x<b.x?1:-1,x1=a.x+s*62,x2=b.x-s*62,m=(x1+x2)/2;d=`M${x1},${a.y} C${m},${a.y} ${m},${b.y} ${x2},${b.y}`}
+return`<path class="mm-edge" data-a="${e[0]}" data-b="${e[1]}" d="${d}"/>`}).join("");
+h+=D.map(d=>{const p=pos[d[1]];return`<g class="mm-node" data-n="${d[1]}"><rect x="${p.x-62}" y="${p.y-14}" width="124" height="28" rx="6" fill="${col(d[0])}" fill-opacity=".16" stroke="${col(d[0])}"/><text x="${p.x}" y="${p.y+4}" text-anchor="middle">${d[1]}</text></g>`}).join("");
+svg.innerHTML=h;
+function hl(n){svg.classList.toggle("dim",!!n);svg.querySelectorAll(".mm-edge,.mm-node").forEach(el=>el.classList.remove("on"));if(!n)return;const rel=new Set([n]);
+svg.querySelectorAll(".mm-edge").forEach(p=>{if(p.dataset.a===n||p.dataset.b===n){p.classList.add("on");rel.add(p.dataset.a);rel.add(p.dataset.b)}});
+svg.querySelectorAll(".mm-node").forEach(g=>{if(rel.has(g.dataset.n))g.classList.add("on")})}
+svg.querySelectorAll(".mm-node").forEach(g=>{g.onmouseenter=()=>hl(g.dataset.n);g.onmouseleave=()=>hl(null);g.onclick=()=>{const t=document.getElementById("t-"+g.dataset.n);if(t)t.scrollIntoView({behavior:"smooth"})}});
+</script><script src="../assets/site.js" data-root=".."></script>
+</body></html>

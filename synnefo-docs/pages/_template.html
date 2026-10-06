@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New Page | Synnefo Docs</title>
+<link rel="stylesheet" href="../assets/style.css">   <!-- the only stylesheet you need -->
+</head><body>
+<main>
+<h1>Page title</h1>
+<p>Short intro in muted text. Use <b>bold</b> and <code>code</code> freely.</p>
+
+<h2>Cards in a grid</h2>
+<div class="grid">
+  <div class="card"><h3>Card title</h3><p>Card text.</p><span class="tag">Tag</span><span class="tag">Another</span></div>
+  <div class="card accent" style="border-left-color:#0d9488"><h3>Accent card</h3><p>Coloured left edge.</p></div>
+</div>
+
+<h2>Table</h2>
+<div class="scroll"><table class="tbl"><tr><th>Field</th><th>Type</th></tr><tr><td>email</td><td>string</td></tr></table></div>
+
+<h2>Key / value list and note</h2>
+<dl class="kv"><dt>status</dt><dd>active</dd><dt>attendance_pct</dt><dd class="derived">91% (calculated)</dd></dl>
+<div class="note">Small grey note box.</div>
+
+<h2>Mind map container</h2>
+<p>Put an <code>&lt;svg&gt;</code> inside <code>.mm</code>; use classes <code>mm-edge</code>, <code>mm-node</code>, <code>mm-link</code>. See pages/data-flow.html for a full example.</p>
+<div class="mm"><svg width="300" height="60"><g class="mm-node"><rect x="10" y="10" width="140" height="36" rx="7" fill="#2563eb" fill-opacity=".15" stroke="#2563eb"/><text x="20" y="32">Example node</text></g></svg></div>
+</main>
+<script src="../assets/site.js" data-root=".."></script>
+</body></html>
