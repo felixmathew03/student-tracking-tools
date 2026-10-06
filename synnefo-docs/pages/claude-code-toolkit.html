@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code Toolkit | Synnefo Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head><body>
+<main>
+<h1>Claude Code toolkit for the Synnefo MERN project</h1>
+<p>Which skills, plugins, MCP servers and hooks to set up, and where each one helps across the development lifecycle. Plugin and server names change over time, so run <code>/plugin</code> inside Claude Code to browse what is currently available and read each tool's own README before installing.</p>
+
+<h2>The building blocks</h2>
+<div class="grid">
+<div class="card"><h3>CLAUDE.md</h3><p>Always-on project memory that Claude reads every session: stack, commands, coding rules. Keep it short (under about 200 lines). Generate a first draft with <code>/init</code>.</p><span class="tag">always loaded</span><span class="tag">team-shared via git</span></div>
+<div class="card"><h3>Skills</h3><p>Reusable instructions Claude loads when relevant, or when you type <code>/skill-name</code>. Each is a folder with a <code>SKILL.md</code>. Best for repeatable workflows such as "create an API module".</p><span class="tag">.claude/skills/&lt;name&gt;/SKILL.md</span></div>
+<div class="card"><h3>Subagents</h3><p>Specialist helpers that work in their own isolated context and report back (reviewer, test writer, debugger). Keeps the main conversation clean.</p><span class="tag">.claude/agents/</span></div>
+<div class="card"><h3>Hooks</h3><p>Commands that run automatically at lifecycle events (after an edit, before a tool runs). Claude cannot forget or skip them, so use them for formatting, linting and guardrails.</p><span class="tag">settings.json</span></div>
+<div class="card"><h3>MCP servers</h3><p>Connections to outside systems: GitHub, a database, a browser, error tracking. They give Claude tools it does not have by default.</p><span class="tag">.mcp.json</span><span class="tag">claude mcp add</span></div>
+<div class="card"><h3>Plugins</h3><p>The packaging layer. One plugin can bundle skills, subagents, hooks and MCP servers. Install with <code>/plugin install name@marketplace</code>; plugin skills are namespaced like <code>/plugin-name:skill</code>.</p><span class="tag">/plugin</span></div>
+</div>
+<div class="note">Rule of thumb: <b>CLAUDE.md</b> = what is always true. <b>Skill</b> = how to do a task. <b>Hook</b> = must always happen. <b>MCP</b> = reach an outside system. <b>Subagent</b> = isolated specialist. <b>Plugin</b> = share it all as one install.</div>
+
+<h2>Lifecycle map</h2>
+<p>Each stage lists what to use. "Write your own" means a skill or file you create once for Synnefo (examples further down); everything else is installed.</p>
+<div id="stages"></div>
+
+<h2>Starter files</h2>
+<div class="card"><h3>CLAUDE.md (project root)</h3>
+<pre><code># Synnefo Student Operations Platform
+MERN: React (Vite) + Express + MongoDB (Mongoose). Docs: @docs/schema.md @docs/ui-structure.md
+
+## Commands
+- Server: `npm run dev -w server`, tests `npm test -w server`
+- Client: `npm run dev -w client`, tests `npm test -w client`
+- Lint/format: `npm run lint`, `npm run format`
+
+## Architecture rules
+- One folder per domain: server/src/modules/&lt;domain&gt;/{model,routes,controller,service}
+- Never store derived values (fee balance, attendance %, grade); compute on read.
+- Attendance links to session_id + student_id only; batch history lives in batch_enrollments.
+- Money uses Decimal128. Payments are immutable; corrections are new records.
+- Sensitive changes (batch transfer, attendance correction, results, fees) write to audit_logs with a reason.
+- Every route checks a permission key; conduct and grievance routes are restricted.
+
+## Style
+- Zod validates every request body. No business logic in controllers.
+- Conventional commits (feat:, fix:, docs:). PRs need tests.</code></pre></div>
+
+<div class="card"><h3>.mcp.json (shared with the team via git)</h3>
+<pre><code>{
+  "mcpServers": {
+    "github":     { "type": "http", "url": "https://api.githubcopilot.com/mcp/" },
+    "playwright": { "command": "npx", "args": ["-y", "@playwright/mcp@latest"] },
+    "mongodb":    { "command": "npx", "args": ["-y", "mongodb-mcp-server", "--readOnly"],
+                    "env": { "MDB_MCP_CONNECTION_STRING": "${MONGODB_DEV_URI}" } }
+  }
+}</code></pre>
+<p>Add servers from the terminal with <code>claude mcp add --transport http github https://api.githubcopilot.com/mcp/ --scope project</code>, then check with <code>claude mcp list</code>. Project-scoped servers ask each person to approve them first. Confirm the MongoDB server's exact flag and variable names in its README.</p></div>
+
+<div class="card"><h3>.claude/skills/api-module/SKILL.md (write your own)</h3>
+<pre><code>---
+name: api-module
+description: Create or change an Express API module (Mongoose model, Zod schema, service, controller, routes, tests) following Synnefo conventions. Use when adding backend features.
+---
+1. Read the collection in docs/schema.md: fields, indexes, unique rules.
+2. Create the model with the exact indexes. Do not store derived values.
+3. Add Zod schemas, service (business rules), thin controller, routes with permission middleware.
+4. For sensitive changes call the audit logger with a reason.
+5. Write Supertest tests for the main rule and one permission failure. Run them.</code></pre></div>
+
+<div class="card"><h3>.claude/settings.json (hooks and guardrails)</h3>
+<pre><code>{
+  "permissions": { "deny": ["Read(./.env)", "Read(./.env.*)"] },
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Edit|Write",
+      "hooks": [{ "type": "command",
+                  "command": "jq -r '.tool_input.file_path' | xargs -r npx prettier --write" }]
+    }]
+  }
+}</code></pre>
+<p>Hooks receive event details as JSON on standard input. Check the hooks documentation for the exact fields in your version.</p></div>
+
+<h2>Suggested rollout</h2>
+<ol>
+<li><b>Day 1:</b> run <code>/init</code>, trim the generated CLAUDE.md to the rules above, add the settings and prettier hook, commit them.</li>
+<li><b>Sprint 0:</b> install the GitHub MCP/plugin, <code>commit-commands</code>, <code>security-guidance</code>; write the <code>api-module</code>, <code>mongoose-model</code> and <code>react-feature</code> skills.</li>
+<li><b>Sprint 1 to 3:</b> add <code>feature-dev</code> for each module, Playwright MCP for UI checks, read-only MongoDB MCP on the dev database.</li>
+<li><b>Before the pilot (S6):</b> add <code>code-review</code> or <code>pr-review-toolkit</code> to every PR, Sentry MCP, and the release skill.</li>
+<li><b>Ongoing:</b> when Claude gets something wrong twice, turn it into a CLAUDE.md rule, a skill or a hook.</li>
+</ol>
+
+<h2>Safety notes</h2>
+<ul>
+<li><b>Trust what you install.</b> Plugins, skills and MCP servers can run code and reach your data. Prefer the official marketplace and well-known servers, and read what a third-party one does first.</li>
+<li><b>Keep secrets out.</b> Store keys in environment variables (<code>${VAR}</code> in <code>.mcp.json</code>), deny reading <code>.env</code> files, never commit tokens.</li>
+<li><b>Database access is read-only and development-only.</b> This system holds fees, grievances and conduct records. Never point an MCP server at production.</li>
+<li><b>Review before merging.</b> Claude's output is a draft for human review; tests and CI stay the gate.</li>
+</ul>
+</main>
+<script>
+const S=[
+{t:"1. Architecture and project planning",g:"Turn the brief and sprint plan into designs and small, ordered tasks before any code.",
+ r:[["CLAUDE.md","Stack, folder layout and the data rules (no derived values, immutable payments, audit reasons). Import design docs with <code>@docs/schema.md</code>."],
+  ["Skills","Write your own <b>module-planner</b>: takes a sprint item and outputs models, endpoints, screens and tests in order."],
+  ["Plugins","<b>feature-dev</b> (explore, design, implement, review workflow); <b>claude-code-setup</b> (analyses the repo and suggests automations)."],
+  ["MCP","Your ticket and docs tool (Jira, Linear or Notion) so Claude reads real tasks; <b>Context7</b> style documentation servers for current library docs."],
+  ["Tip","Start in Plan Mode so Claude proposes a plan and you approve it before it edits files."]]},
+{t:"2. Consistent coding standards",g:"Every module looks the same, whoever (or whatever) wrote it.",
+ r:[["CLAUDE.md","Naming, folder-per-domain, Zod on every request, thin controllers, error format."],
+  ["Skills","Write your own <b>mongoose-model</b>, <b>api-module</b>, <b>react-feature</b>: each encodes the exact pattern and the schema rules."],
+  ["Plugins","<b>claude-md-management</b> (keeps CLAUDE.md healthy); <b>hookify</b> (turn repeated corrections into rules); a code-intelligence (LSP) plugin for JavaScript/TypeScript so Claude finds definitions accurately."],
+  ["Hooks","PostToolUse after Edit/Write: run Prettier and ESLint automatically. This is enforced, not just requested."],
+  ["Outside Claude","ESLint, Prettier, Husky + lint-staged so humans follow the same rules."]]},
+{t:"3. Git collaboration and pull requests",g:"Small branches, clear commits, reviewed PRs.",
+ r:[["Skills","Write your own <b>pr-description</b> skill that fills your PR template: what changed, collections touched, test evidence, screenshots."],
+  ["Plugins","<b>commit-commands</b> (commit, push, open PR); <b>code-review</b> (parallel review agents with confidence filtering); <b>pr-review-toolkit</b> (specialist reviewers for tests, error handling, types, simplification); <b>github</b> plugin."],
+  ["MCP","<b>GitHub</b> server: read issues, create branches and PRs, read review comments and CI results."],
+  ["Conventions","Branch per task, conventional commits, protected main, at least one human approval."]]},
+{t:"4. Automated testing and debugging",g:"Rules like 'attendance survives a batch transfer' are proven by tests, not trust.",
+ r:[["Skills","Write your own <b>write-tests</b> (Jest or Vitest + Supertest + React Testing Library, using the sprint's demo script as test cases) and <b>debug-playbook</b> (reproduce, isolate, fix, add regression test)."],
+  ["Subagents","A <b>test-writer</b> and a <b>debugger</b> subagent so noisy test output stays out of the main chat."],
+  ["MCP","<b>Playwright</b> (drive the real UI, read console and network errors); read-only <b>MongoDB</b> on the dev database to inspect data; <b>Sentry</b> for real stack traces."],
+  ["Hooks","Run the related test file after edits, or run the suite before a task is marked done."],
+  ["Must-test","Batch transfer history, cross-batch attendance, installment status, payment immutability, permission denials."]]},
+{t:"5. Security and performance",g:"Student, fee and grievance data must be protected, and screens must stay fast.",
+ r:[["Skills","Write your own <b>security-checklist</b> (RBAC on every route, no password hashes in responses, NoSQL injection sanitising, rate limiting, secure cookies, upload type and size limits) and <b>mongo-index-review</b> (check queries and explain plans against the indexes on the schema page)."],
+  ["Plugins","<b>security-guidance</b> (warns about risky patterns while editing); <b>code-review</b> for PR-level checks. Claude Code also has a built-in <code>/security-review</code> command in many versions."],
+  ["MCP","Read-only <b>MongoDB</b> to run <code>explain()</code> on slow queries; Playwright for page-load and console checks."],
+  ["Permissions","Deny rules for <code>.env</code> and secrets; restricted modules (conduct, grievances) get access tests."],
+  ["Performance","Pagination on lists, indexes from the schema page, lean queries, React lazy routes, load tests for attendance marking."]]},
+{t:"6. Documentation for future developers",g:"A new developer can understand the system in a day.",
+ r:[["CLAUDE.md","Keep it current; it is the first thing any new session (and developer) reads."],
+  ["Skills","Write your own <b>api-docs</b> (OpenAPI/Swagger comments per route), <b>adr</b> (decision records in docs/adr), <b>module-readme</b> (purpose, collections, endpoints, screens)."],
+  ["Plugins","<b>claude-md-management</b>; the built-in <code>/init</code> for first drafts."],
+  ["MCP","Notion or Confluence server if your team documents there."],
+  ["Keep in repo","The schema, UI map, data-flow and sprint pages from this docs folder, plus a CHANGELOG."]]},
+{t:"7. Deployment and release management",g:"Repeatable releases with a clear way back.",
+ r:[["Skills","Write your own <b>release-checklist</b> (version bump, changelog, migrations, env vars, smoke tests, rollback) and <b>ci-workflow</b> (GitHub Actions: lint, test, build, deploy)."],
+  ["Plugins","<b>commit-commands</b> for release commits and PRs; <b>github</b> plugin for tags and releases."],
+  ["MCP","<b>GitHub</b> (Actions status, releases); <b>Sentry</b> (new errors after a release); your host's server if it offers one (Render, Railway, Vercel, AWS)."],
+  ["Hooks","Block edits to production config files; require a passing test run before release commands."],
+  ["Stack","Docker images, MongoDB Atlas, staging + production environments, semantic versioning, database backups before migrations."]]}
+];
+document.getElementById("stages").innerHTML=S.map(s=>`<div class="card accent"><h3>${s.t}</h3><p>${s.g}</p>${s.r.map(r=>`<div class="lane"><b>${r[0]}</b><div>${r[1]}</div></div>`).join("")}</div>`).join("");
+</script>
+<script src="../assets/site.js" data-root=".."></script>
+</body></html>

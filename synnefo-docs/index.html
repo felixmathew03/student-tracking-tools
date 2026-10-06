@@ -10,6 +10,12 @@
 <h2>Pages</h2>
 <div class="grid" id="page-cards"></div>
 
+<h2>Adding a new page</h2>
+<ol>
+<li>Copy <code>pages/_template.html</code> to <code>pages/your-page.html</code> and write your content using the ready-made components (card, grid, tag, table, kv, note, mind map).</li>
+<li>Add one line to the <code>PAGES</code> list in <code>assets/site.js</code>. It appears here and in the top navigation of every page.</li>
+<li>Never add a <code>&lt;style&gt;</code> block. If you need a new look, add it once to <code>assets/style.css</code> so all pages can use it.</li>
+</ol>
 </main>
 <script src="assets/site.js" data-root="."></script>
 </body></html>
