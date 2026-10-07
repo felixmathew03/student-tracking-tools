@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synnefo Student Management Platform: Presentation</title>
+<style>
+:root{--bg:#0a0f1f;--sl:#111933;--pn:#1a2347;--pn2:#212c57;--bd:#2c3a6e;--fg:#eef1fb;--mut:#a7b0d0;--ac:#5b8cff;--ac2:#2dd4bf;--wa:#fbbf24;--rd:#f87171}
+[data-theme="light"]{--bg:#e7ebf5;--sl:#fff;--pn:#f1f4fb;--pn2:#e4e9f6;--bd:#cfd7ea;--fg:#141b34;--mut:#4d5776;--ac:#2956d8;--ac2:#0d9488;--wa:#b45309;--rd:#dc2626}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center;background:var(--sl);border-radius:6px;overflow:hidden;box-shadow:0 10px 50px rgba(0,0,0,.4)}
+.slide{position:absolute;inset:0;padding:34px 50px 0;opacity:0;visibility:hidden;transform:translateX(30px);transition:opacity .25s,transform .25s,visibility .25s}
+.slide.on{opacity:1;visibility:visible;transform:none}.slide.pv{transform:translateX(-30px)}
+@media (prefers-reduced-motion:reduce){.slide{transition:none}}
+.sec{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ac2);font-weight:700}
+h1,h2{margin:2px 0 0;font-size:34px;line-height:1.15}
+.bd{position:absolute;left:50px;right:50px;top:104px;bottom:44px;overflow:hidden}
+.fit{transform-origin:0 0;width:100%;font-size:15px;line-height:1.4}
+.ft{position:absolute;left:50px;right:50px;bottom:12px;display:flex;justify-content:space-between;font-size:12px;color:var(--mut)}
+.g{display:grid;gap:12px}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g6{grid-template-columns:repeat(6,1fr)}
+.card{background:var(--pn);border:1px solid var(--bd);border-top:3px solid var(--c,var(--ac));border-radius:10px;padding:11px 13px}
+.card h3{margin:0 0 5px;font-size:16px}.card p{margin:3px 0;color:var(--mut)}
+ul{margin:4px 0;padding-left:18px}li{margin:2px 0}.card li{font-size:13.5px;color:var(--fg)}
+.lb{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-top:7px;font-weight:700}
+.no li{color:var(--mut)}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0}.flow b{background:var(--pn2);border:1px solid var(--bd);padding:3px 10px;border-radius:14px;font-size:13px;font-weight:600}.flow i{color:var(--ac2);font-style:normal}
+.tag{display:inline-block;background:var(--pn2);border:1px solid var(--bd);padding:1px 8px;border-radius:10px;margin:2px 3px 2px 0;font-size:12px}
+code,pre{font-family:ui-monospace,Menlo,Consolas,monospace}
+pre{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:9px 12px;margin:6px 0;font-size:12px;line-height:1.45;overflow:hidden;white-space:pre-wrap}
+code{background:var(--pn2);padding:0 5px;border-radius:4px;font-size:12.5px}
+.big{font-size:19px;color:var(--fg);line-height:1.5}.q{border-left:4px solid var(--ac);padding:6px 14px;background:var(--pn);border-radius:0 8px 8px 0;font-size:17px;margin:10px 0}
+.title{display:flex;flex-direction:column;justify-content:center;background:linear-gradient(135deg,var(--sl),var(--pn))}
+.title h1{font-size:56px}.title p{font-size:20px;color:var(--mut);max-width:800px}
+table{border-collapse:collapse;width:100%}.mx th,.mx td{padding:3px 4px;text-align:center;font-size:12px;border-bottom:1px solid var(--bd)}.mx th{font-size:11px;color:var(--mut)}.mx td:first-child,.mx th:first-child{text-align:left;font-size:12.5px;width:230px}
+.mx td span{display:inline-block;min-width:22px;border-radius:5px;font-weight:700;padding:1px 0}
+.k-f{background:#16a34a;color:#fff}.k-w2{background:#2563eb;color:#fff}.k-c{background:#d97706;color:#fff}.k-w1{background:#7c3aed;color:#fff}.k-v2{background:var(--pn2);color:var(--fg)}.k-v1{background:var(--pn2);color:var(--mut)}.k-s{background:#0d9488;color:#fff}.k-n{color:var(--bd)}
+.wf{display:grid;grid-template-columns:170px 1fr;grid-template-rows:42px 1fr;gap:8px;height:430px;border:2px solid var(--bd);border-radius:10px;padding:8px;background:var(--bg)}
+.wf div{background:var(--pn);border:1px dashed var(--bd);border-radius:6px;padding:6px 8px;font-size:12.5px}.wf .sb{grid-row:1/3}.wf .tb{grid-column:2;display:flex;justify-content:space-between}
+.wf .ct{display:grid;grid-template-rows:auto auto 1fr;gap:6px}.wf .sb p{margin:5px 0;padding:3px 6px;background:var(--pn2);border-radius:4px;color:var(--fg)}
+.st div{display:block;margin:6px 0;text-align:center;border-radius:8px;padding:8px;background:var(--pn);border:1px solid var(--bd);border-left:5px solid var(--c,var(--ac))}.st small{color:var(--mut);display:block;font-size:12.5px}
+#bar{position:fixed;left:0;top:0;height:4px;background:linear-gradient(90deg,var(--ac),var(--ac2));width:0;z-index:5;transition:width .2s}
+#ctl{position:fixed;right:12px;bottom:10px;display:flex;gap:6px;z-index:6;transition:opacity .3s}#ctl.h{opacity:0}
+#ctl button{background:var(--pn);color:var(--fg);border:1px solid var(--bd);border-radius:8px;min-width:36px;height:34px;font-size:15px;cursor:pointer}#ctl button:hover{background:var(--ac);color:#fff}
+.ov{position:fixed;inset:0;background:rgba(5,8,20,.92);z-index:10;display:none;overflow:auto;padding:30px;color:#eef1fb}.ov.show{display:block}
+.ov h2{margin:0 0 14px}.ovg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.ovg button{text-align:left;background:#1a2347;color:#eef1fb;border:1px solid #2c3a6e;border-radius:8px;padding:9px 11px;cursor:pointer;font-size:14px}.ovg button.cur{border-color:#2dd4bf}.ovg small{color:#a7b0d0;display:block}
+.hp{max-width:560px;margin:60px auto;background:#1a2347;border:1px solid #2c3a6e;border-radius:12px;padding:20px}.hp td{padding:4px 10px;font-size:14px}.hp kbd{background:#0a0f1f;border:1px solid #2c3a6e;border-radius:5px;padding:1px 7px}
+#toast{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:var(--ac);color:#fff;padding:5px 14px;border-radius:14px;font-weight:700;z-index:12;display:none}
+a.go{color:inherit;text-decoration:none;cursor:pointer}
+</style></head><body>
+<div id="bar"></div>
+<div id="stage"></div>
+<div id="ctl"><button id="bp" title="Previous (←)">‹</button><button id="bn" title="Next (→)">›</button><button id="bo" title="Overview (O)">▦</button><button id="bt" title="Theme (T)">◐</button><button id="bf" title="Fullscreen (F)">⛶</button><button id="bh" title="Help (?)">?</button></div>
+<div class="ov" id="ov"><h2>All slides</h2><div class="ovg" id="ovg"></div></div>
+<div class="ov" id="hp"><div class="hp"><h2>Keyboard shortcuts</h2><table>
+<tr><td><kbd>→</kbd> <kbd>↓</kbd> <kbd>Space</kbd> <kbd>PgDn</kbd></td><td>Next slide</td></tr>
+<tr><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>Backspace</kbd> <kbd>PgUp</kbd></td><td>Previous slide</td></tr>
+<tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last slide</td></tr>
+<tr><td><kbd>O</kbd></td><td>Slide overview</td></tr>
+<tr><td><kbd>F</kbd></td><td>Fullscreen</td></tr>
+<tr><td><kbd>T</kbd></td><td>Dark / light theme</td></tr>
+<tr><td><kbd>1</kbd>–<kbd>9</kbd> + <kbd>Enter</kbd></td><td>Jump to slide number</td></tr>
+<tr><td><kbd>?</kbd> / <kbd>Esc</kbd></td><td>This help / close</td></tr></table>
+<p style="color:#a7b0d0;font-size:13px">Touch: swipe left or right. The slide always scales to fit the window.</p></div></div>
+<div id="toast"></div>
+<script>
+const L=a=>"<ul>"+a.map(x=>"<li>"+x+"</li>").join("")+"</ul>";
+const G=(n,a)=>`<div class="g g${n}">${a.join("")}</div>`;
+const C=(t,b,c)=>`<div class="card" ${c?`style="--c:${c}"`:""}>${t?`<h3>${t}</h3>`:""}${b}</div>`;
+const F=a=>`<div class="flow">${a.map((x,i)=>(i?"<i>→</i>":"")+"<b>"+x+"</b>").join("")}</div>`;
+const T=a=>a.map(x=>`<span class="tag">${x}</span>`).join("");
+const col={sys:"#a78bfa",adm:"#5b8cff",fin:"#fbbf24",aca:"#34d399",suc:"#f472b6",stu:"#2dd4bf"};
+// ---------- roles ----------
+const ROLES=[
+["SA","Super Admin","sys","Founders. Full access plus audited overrides.",["Everything in every module","Create roles and permissions; assign or remove them per role, with scope","Manage users, settings, configurable lists","Sensitive overrides and full audit access"],"Every override is audited. At least one active Super Admin must always exist."],
+["AD","Admin","adm","Runs the institute's records and structure.",["Add, edit, deactivate and archive programs and curriculum","Admissions, enrollments, student administration","Create batches, set capacity, transfer students","Documents, T&amp;C, announcements, reports"],"Cannot change roles or permissions. Fees are view-only."],
+["VO","View-only Admin","adm","Admin-like visibility without write access.",["Read dashboards, students, batches, attendance, assessments, placement, fees, reports","View audit logs"],"No create, edit, delete or approve anywhere. No permission management."],
+["AM","Accounts Manager","fin","Owns money rules and corrections.",["Fee structures: program fee, GST, discount, scholarship","Payment plans: full, installment, EMI, custom","Edit or delete payments and receipts, with a reason","Outstanding balances and financial reports"],"No academic or placement changes. Student data is view-only."],
+["FC","Fee Collector","fin","Front office: collects fees and does basic admissions.",["Collect payments and issue receipts","View payment history and outstanding","Basic admissions and student profile","Initial batch assignment where authorised"],"Cannot edit or delete a payment. Only the Accounts Manager can."],
+["HA","Head of Academics","aca","Owns programs, batches, faculty and academic quality.",["Programs, curriculum, batches, sessions","Faculty assignments","Attendance, assessments, presentations, corrections and approvals","Internship review workflow, academic reports"],"No finance. No permission management."],
+["FA","Faculty (Senior / Junior)","aca","Teaches assigned batches.",["Own profile and timetable; view assigned students","Mark attendance for assigned sessions","Create and review assignments, give feedback","Enter marks where authorised; seniors mentor juniors"],"Only assigned batches. No fees or placement data."],
+["LT","Language Trainer","aca","Owns language assessment inside Student Success.",["Schedule assessments and record results","Remarks and rescheduling","Plan additional training and mark completion","Schedule reassessment"],"Training completion never auto-passes. Language records only."],
+["HS","Head of Student Success","suc","Leads Student Success and placement.",["Student 360 and follow-ups","Placement operations: profiles, resumes, sessions","Mock interviews and language oversight","Issues, feedback, interventions, student communication"],"No fee edits. Academic data is mostly view-only."],
+["PO","Placement Officer","suc","Runs day-to-day placement activity.",["Placement profile: skills, target role, relocation","Review resumes with threaded feedback","Arrange placement sessions and mock interviews","Record placement outcomes"],"Academic information is view-only. No fees."],
+["SC","Student Coordinator","suc","Academic operations and student management.",["Student 360 and student management","Batch operations, lab and room allocation, timetable","Attendance monitoring, follow-ups, issues, announcements","Assignment and internship monitoring"],"Fees are view-only where relevant. No permission changes."],
+["ST","Student","stu","Self-service for own records only.",["View own profile, attendance, assessments, tasks, fees, documents, T&amp;C","Submit and resubmit tasks, reply to feedback","Manage permitted resume uploads (max 5)","Raise grievances, give feedback, acknowledge policies"],"Own records only. No staff data."]];
+const roleCard=r=>C(r[1],`<p>${r[3]}</p><div class="lb">Can do</div>${L(r[4])}<div class="lb">Limits</div><p style="font-size:13px">${r[5]}</p>`,col[r[2]]);
+// ---------- permission matrix ----------
+const MC=["Super Admin","Admin","View-only","Accts Mgr","Fee Coll.","Head Acad.","Faculty","Lang. Trn.","Head SS","Placement","Coord.","Student"];
+const MX=[["Users, roles and permissions","F - - - - - - - - - - -"],["System settings, lists, templates","F V V - - - - - - - - -"],["Programs and curriculum","F F V - - F v - V - v -"],["Batches, timetable, labs","F F V - C F v - V - W S"],["Students and Student 360","F F V v W v v v W v W S"],["Admissions and enrollment","F F V v C W - - v - v S"],["Attendance","F V V - - F w - V V W S"],["Assessments and presentations","F V V - - F w - V V V S"],["Internship tasks","F V V - - F w - V V V S"],["Placement: profile, resumes, sessions, mock","F V V - - V - - F W V S"],["Language assessment and training","F V V - - V - W F V V S"],["Follow-ups, issues, feedback","F V V - - W w - F W W S"],["Fee structure and plans","F V V F v - - - - - v S"],["Payments and receipts","F V V F C - - - - - v S"],["Announcements, notifications","F F V W C W - - W - W S"],["Documents and T&amp;C","F F V W v v - - v v v S"],["Reports and analytics","F F V W - W v - W V V -"],["Audit logs","F V V v - v - - v - - -"]];
+const KC={F:"f",W:"w2",C:"c",w:"w1",V:"v2",v:"v1",S:"s","-":"n"};
+const matrix=`<table class="mx"><tr><th>Module</th>${MC.map(c=>"<th>"+c+"</th>").join("")}</tr>${MX.map(r=>"<tr><td>"+r[0]+"</td>"+r[1].split(" ").map(x=>`<td><span class="k-${KC[x]}">${x==="-"?"–":x}</span></td>`).join("")+"</tr>").join("")}</table>
+<div style="margin-top:6px;font-size:12px;color:var(--mut)"><b>F</b> full (create, edit, delete, approve) · <b>W</b> write · <b>C</b> create only, no edit or delete · <b>w</b> write on assigned scope · <b>V</b> view all · <b>v</b> view limited, assigned or relevant · <b>S</b> own records only · – none. Defaults only: the Super Admin can change any cell.</div>`;
+// ---------- sprints ----------
+const SPR=[
+["S0","Foundation and standards","#94a3b8",["Monorepo (client, server), Docker with MongoDB replica set","ESLint, Prettier, Husky, commitlint, CI pipeline","Config validation, error format, logger","Swagger skeleton, docs skeleton, seed script"],"Dev team","Audit logger library scaffold"],
+["S1","Super Admin I: access","#a78bfa",["Login, logout, refresh, password reset","Users and roles CRUD","Permission registry (<code>module.action</code>) with scopes","Role-permission assignment UI and authorize middleware","First Super Admin seed"],"Super Admin","Login, failed login, user and role changes, every permission grant or removal"],
+["S2","Super Admin II: control","#a78bfa",["Audit log viewer: filters and export","System settings and policy rules (resume max 5, attendance rules, session count)","Configurable lists: qualifications, streams, assessment and task types, attendance statuses","Notification templates, sensitive override with reason","Super Admin dashboard"],"Super Admin (complete)","Settings, list, template changes, overrides with reason"],
+["S3","Programs and students","#5b8cff",["Programs and curriculum: add, edit, deactivate, archive","Student records and Student 360 shell, photo upload","Admin and View-only Admin workspaces"],"Admin, View-only Admin","Program changes, student create, edit, status change"],
+["S4","Admissions, batches, history","#5b8cff",["Admission and enrollment, documents upload","Batches: capacity, assignment, transfer, history","Program transfer with carry-forward decision and approver","Fee Collector basic admissions"],"Admin, Fee Collector","Enrollment, batch and program changes, document actions"],
+["S5","Sessions and attendance","#34d399",["Timetable, faculty assignment, lab and room allocation, conflict checks","Attendance: manual, bulk, cross-batch","Corrections with reason; views by student, batch, program, session"],"Head of Academics, Faculty, Coordinator","Attendance create, every correction, session and timetable changes"],
+["S6","Assessments, presentations, tasks","#34d399",["Assessments with configurable types and attempts","Presentations: schedule, evaluation, re-attempt","Internship tasks as records (about 50 per student), workflow, deadline state","Threaded feedback and resubmission history"],"Head of Academics, Faculty","Marks and result changes, deadline changes, task status changes"],
+["S7","Student portal and notifications","#2dd4bf",["Student dashboard with deadlines and progress","Email and in-platform notification centre","Announcements: institute, program, batch, selected students","Reminder jobs. Phase 1 complete"],"Student, Coordinator","Announcement publish, notification failures"],
+["S8","Placement core","#f472b6",["Placement profile: skills, target role, relocation, links","Resumes: max 5, versions, primary, review workflow and thread","Placement sessions as individual records"],"Head of SS, Placement Officer","Resume review activity, placement status changes"],
+["S9","Language, mock, student success","#f472b6",["Language assessment, additional training, reassessment","Mock interviews with evaluation and follow-up","Follow-ups, issues, feedback, grievances, placement reports. Phase 2 complete"],"Language Trainer, Head of SS","Language results, follow-up and grievance status"],
+["S10","Finance","#fbbf24",["Fee structure: GST, discount, scholarship; payment plans","Payments, receipts, outstanding states, fee notifications","Manager-only edit and delete of payments","Accounts Manager and Fee Collector workspaces"],"Accounts Manager, Fee Collector","Fee changes, every payment, edits and deletes with reason"],
+["S11","Policies, certificates, reports","#fb923c",["T&amp;C versions and student acknowledgement","Certificates and verification","Advanced reports and analytics","Integrations: payment gateway, RFID or biometric, storage. Phase 3 complete"],"All roles","T&amp;C acknowledgement, certificate issue, integration events"],
+["S12","Hardening and launch","#94a3b8",["Security review, performance and index tuning","Data import, user acceptance testing per role","Training, backups, deployment, runbook","Automated check: every write route emits an audit event"],"All roles","Audit completeness test"]];
+const sprCard=s=>C(`${s[0]}: ${s[1]}`,`<div class="lb">Features</div>${L(s[3])}<div class="lb">Roles unlocked</div><p style="font-size:13px">${s[4]}</p><div class="lb">Audited</div><p style="font-size:13px">${s[5]}</p>`,s[2]);
+// ---------- slides ----------
+const SL=[
+{s:"Welcome",t:"Synnefo Student Management Platform",cls:"title",h:`<div class="sec">Project presentation</div><h1>Synnefo Student<br>Management Platform</h1><p>One reliable record of every student's journey: admission, training, internship, placement and completion.</p><div style="margin-top:18px">${T(["MERN stack","Role-based permissions","Full audit trail","Offline classroom model"])}</div><p style="font-size:14px;margin-top:26px">Press <b>→</b> to begin · <b>?</b> for shortcuts</p>`},
+{s:"Welcome",t:"Agenda",h:"@AGENDA"},
+{s:"Overview",t:"The project in brief",h:`<div class="q">A student-centric operations platform for an <b>offline, classroom-based IT training institute</b>.</div>${G(3,[C("What it manages",L(["Student 360 profile and history","Programs, batches, sessions","Attendance, assessments, presentations","Internship tasks","Placement preparation and activity","Fees, documents, notices"]),col.adm),C("Who uses it",L(["Founders and admins","Academics: head, faculty","Student Success and placement","Accounts and front office","Students (self-service)"]),col.aca),C("What it is not",`<ul class="no"><li>Not an LMS or video platform</li><li>Not an HRMS (HR stays in its own system)</li><li>Not a separate project tool</li><li>No automatic curriculum equivalency</li></ul>`,col.fin)])}<p class="big" style="margin-top:12px">Core principle: <b>record what actually happened to the student, whatever their current batch or program.</b></p>`},
+{s:"Overview",t:"Objectives",h:G(4,[["Reliable student record","One long-lived profile per student"],["Preserved history","Batch and program changes never rewrite the past"],["Accurate attendance","Per actual session, not per current batch"],["Academics","Assessments, presentations, internship tasks"],["Placement support","Resumes, sessions, mock interviews, language"],["Finance","Fee plans, payments, receipts, outstanding"],["Self-service and alerts","Student dashboard, email, in-app notifications"],["Auditability","Important actions are traceable, T&amp;C acknowledged"]].map(x=>C(x[0],`<p>${x[1]}</p>`)))},
+{s:"Overview",t:"Scope and rollout",h:`${G(2,[C("In scope",T(["Student 360","Programs","Batches and transfers","Sessions","Attendance","Assessments","Presentations","Internship tasks","Placement profile","Resumes (max 5)","Placement sessions","Language assessment","Mock interviews","Follow-ups","Fees and payments","Documents","T&amp;C","Certificates","Notifications","Reports","Audit trail"]),col.aca),C("Out of scope",`<ul class="no"><li>LMS, content or live online classes</li><li>Course marketplace</li><li>HRMS and employee management</li><li>Academic credits or competency engine</li><li>Automatic curriculum equivalency</li></ul>`,col.fin)])}<div class="lb" style="margin-top:12px">Spec rollout</div>${F(["Phase 1: core student operations","Phase 2: student success and placement","Phase 3: finance and expansion","Future: analytics, equivalency"])}`},
+{s:"Overview",t:"The student journey and domain model",h:`${F(["Admission","Enrollment and batch","Academic training","Internship tasks","Placement preparation","Placement","Completion"])}<div class="g g2" style="margin-top:8px">${C("Student 360 (the persistent entity)",L(["Enrollment and program history; batch history","Academic: sessions, attendance, assessments, presentations, tasks","Success and placement: profile, resumes, sessions, language, mock interviews","Finance: fees, plans, payments","Documents and policies; communication"]),col.adm)}${C("Rules that never change",L(["A batch is operational grouping; the student is permanent","Transfers close one batch row and open another","Attendance belongs to the actual session","Same-named curriculum items are not equivalent","No silent overwrite of history; important changes audited"]),col.stu)}</div>`},
+{s:"Overview",t:"Key workflows",h:G(2,[C("Internship task",F(["Not started","In progress","Submitted","Under review","Approved"])+`<p>If changes needed: Changes requested → student update → resubmitted → under review. Feedback is a thread; deadline state (upcoming, due today, overdue) is separate.</p>`,col.aca),C("Resume review",F(["Uploaded","Under review","Approved"])+`<p>Or changes requested → student uploads new version → review again. Max 5 resumes, one primary.</p>`,col.suc),C("Language assessment",F(["Assessment","Pass: done"])+F(["Fail","Additional training","New assessment"])+`<p>Training completion never auto-passes.</p>`,col.suc),C("Placement session and mock interview",F(["Arranged","Attended / Not attended / Rescheduled"])+F(["Mock scheduled","Evaluation","Feedback","Follow-up"]),col.suc),C("Batch transfer",F(["Batch A ends","Batch B begins","Future sessions use B"])+`<p>All Batch A history stays unchanged.</p>`,col.adm),C("Program transfer",F(["Enrollment preserved","New enrollment","New batch","Review and explicit carry-forward"])+`<p>Decision and approver recorded.</p>`,col.adm)])},
+{s:"Roles and permissions",t:"Twelve roles at a glance",h:G(4,ROLES.map(r=>C(r[1],`<p style="font-size:13px">${r[3]}</p>`,col[r[2]])))+`<p style="margin-top:12px">Your list plus the spec's Head of Academics, Senior and Junior Faculty and Language Trainer. Roles are data, so any of them can be changed by the Super Admin.</p>`},
+{s:"Roles and permissions",t:"Roles: Super Admin, Admin, view-only, accounts",h:G(4,[0,1,2,3].map(i=>roleCard(ROLES[i])))},
+{s:"Roles and permissions",t:"Roles: fee collection and academics",h:G(4,[4,5,6,7].map(i=>roleCard(ROLES[i])))},
+{s:"Roles and permissions",t:"Roles: student success, coordination, students",h:G(4,[8,9,10,11].map(i=>roleCard(ROLES[i])))},
+{s:"Roles and permissions",t:"Default permission matrix",h:matrix},
+{s:"Roles and permissions",t:"Permission schema: managed by the Super Admin",h:`<div class="g g2"><div><pre>permissions            // registry, add any time
+{ key:"attendance.mark", module:"attendance",
+  action:"mark", description:"Mark attendance",
+  allowed_scopes:["assigned_batches","all"],
+  is_sensitive:false, is_active:true }
+
+roles
+{ key:"fee_collector", name:"Fee Collector",
+  is_system:true, is_active:true }</pre><pre>role_permissions       // unique(role_id, permission_id)
+{ role_id, permission_id,
+  scope:"self|assigned_batches|assigned_programs|all",
+  granted_by, granted_at }
+
+faculty_assignments    // defines "assigned"
+{ user_id, batch_id | program_id, from, to }</pre></div><div>${C("Super Admin console can",L(["Add a permission key to the registry","Create, rename or deactivate a role","Tick or untick permissions per role and pick the scope","Assign a role to a user","See every change in the audit log (who, what, before, after)"]),col.sys)}${C("Examples",L(["<code>attendance.view</code> self, assigned_batches or all","<code>payments.create</code> Fee Collector","<code>payments.edit</code> and <code>payments.delete</code> Accounts Manager only","<code>permissions.manage</code> Super Admin only"]),col.fin)}${C("Guardrails",L(["System roles cannot be deleted","Super Admin always keeps <code>permissions.manage</code>","A new key only takes effect where code checks it"]),col.fin)}</div></div>`},
+{s:"Roles and permissions",t:"How a permission check works",h:`${F(["Request","Verify login token","Load role permissions (cached)","Check key and scope","Run service logic","Write audit event","Respond"])}${G(2,[C("Scope rules",L(["<b>self</b>: record belongs to the user","<b>assigned_batches</b>: batch is in the user's assignments","<b>all</b>: no restriction"]),col.sys),C("Both layers",L(["UI: menus and buttons hidden using the same permission data","API: the real enforcement; 403 <code>PERMISSION_DENIED</code> is itself audited","Permission changes invalidate the cache immediately"]),col.aca)])}<pre>router.patch("/payments/:id", authorize("payments.edit"), audit("payment.update", { reasonRequired:true }), controller.update)</pre>`},
+{s:"Audit",t:"Audit logs: everything a user does is recorded",h:`${G(2,[C("What is recorded",L(["Every create, update, delete and approve, by any role, through one middleware","Logins, failed logins, permission denials, exports","Reads of sensitive data: finance, internal notes","Reason text for corrections, overrides, deletions"]),col.sys),C("Each entry holds",L(["Actor and role, time, IP, request id","Action key such as <code>attendance.correct</code>","Entity type and id, student id where relevant","Before and after values, reason"]),col.adm)])}<div class="lb" style="margin-top:8px">Minimum from the spec</div>${T(["Attendance corrections","Result changes","Fee changes","Payments","Batch changes","Program changes","Student status","Placement status","T&amp;C acknowledgement","Deadline changes","Resume review","Profile changes","User and permission changes"])}<div class="q" style="font-size:15px">Append-only: no edit or delete route, written with the change, searchable by actor, student, module and date. A test checks that every write route emits an event.</div>`},
+{s:"Sprint plan",t:"Sprint roadmap: Super Admin first",h:`<p class="big">13 sprints of two weeks (about 26 weeks). Super Admin capability is complete by the end of Sprint 2, so every later module is built on working permissions and audit logging.</p><div class="st">${SPR.map(s=>`<div style="--c:${s[2]};display:flex;justify-content:space-between;text-align:left;padding:5px 12px;margin:4px 0"><b>${s[0]}: ${s[1]}</b><small style="display:inline">${s[4]}</small></div>`).join("")}</div>`},
+{s:"Sprint plan",t:"Sprints 0 to 2: foundation and Super Admin",h:G(3,SPR.slice(0,3).map(sprCard))},
+{s:"Sprint plan",t:"Sprints 3 to 5: structure and daily operations",h:G(3,SPR.slice(3,6).map(sprCard))},
+{s:"Sprint plan",t:"Sprints 6 to 8: assessment, portal, placement",h:G(3,SPR.slice(6,9).map(sprCard))},
+{s:"Sprint plan",t:"Sprints 9 to 12: success, finance, launch",h:G(4,SPR.slice(9).map(sprCard))},
+{s:"UI layer",t:"UI layers",h:`<div class="g g2"><div class="st">${[["Role workspaces","Super Admin Console · Admin · Academics · Student Success and Placement · Finance · Student Portal","#a78bfa"],["Feature modules","students · attendance · assessments · tasks · placement · fees (each: pages, components, api)","#5b8cff"],["Shared UI kit","Table · Form · Modal and Drawer · Tabs · StatusBadge · Thread · FileUpload · ReasonDialog","#34d399"],["App shell and routing","Sidebar built from permissions · Top bar · Notification bell · Route guard <Can permission scope>","#fbbf24"],["Data layer","API client · query hooks · auth and permission context · shared validation schemas","#f472b6"],["Backend API /api/v1","Permission-checked and audited REST API over MongoDB","#94a3b8"]].map(x=>`<div style="--c:${x[2]}"><b>${x[0]}</b><small>${x[1].replace(/</g,"&lt;")}</small></div>`).join("")}</div><div>${C("Principles",L(["Each layer only talks to the one below it","Pages never call the API directly; they use feature hooks","One shared UI kit so every screen looks and behaves the same","UI hides what a role cannot do; the API enforces it","Every list: search, filter, paginate; every form: validate, loading, error","Student portal is mobile-first; staff screens desktop-first"]),col.adm)}</div></div>`},
+{s:"UI layer",t:"Simple wireframe: app shell and Student 360",h:`<div class="wf"><div class="sb"><b>Synnefo</b><p>Dashboard</p><p>Students</p><p>Batches</p><p>Attendance</p><p>Assessments</p><p>Placement</p><p>Fees</p><p>Reports</p><p style="color:var(--mut)">Menu shows only what the role may open</p></div><div class="tb"><span>🔍 Search students</span><span>🔔 3 &nbsp; Role: Coordinator ▾</span></div><div class="ct"><div><b>Anjali Nair</b> · STU-0142 · MERN · Batch MERN-26-03 &nbsp;<span class="tag">Active</span></div><div>Overview · Academic · Attendance · Tasks · Placement · Fees · Documents · History</div><div>Selected tab content: tables, status badges, threads and action buttons. Buttons a role cannot use are not shown.</div></div></div>`},
+{s:"UI layer",t:"Workspaces and navigation",h:G(3,[["Super Admin Console",["Users","Roles","Permission matrix","Audit logs","Settings and lists","Templates"],col.sys],["Admin and Academics",["Programs","Curriculum","Batches","Timetable","Attendance","Assessments","Tasks","Reports"],col.aca],["Student Success and Placement",["Student 360","Follow-ups","Resumes","Placement sessions","Mock interviews","Language","Issues"],col.suc],["Finance",["Fee structures","Payment plans","Payments","Receipts","Outstanding","Financial reports"],col.fin],["Student Portal",["Dashboard","Attendance","Tasks and feedback","Placement","Fees","Documents","T&amp;C","Notifications"],col.stu],["Shared everywhere",["Login and profile","Notification centre","Announcements","Global student search"],col.adm]].map(x=>C(x[0],T(x[1]),x[2])))},
+{s:"Best practices",t:"Naming rules and project structure",h:G(2,[C("Names",L(["Folders and files: <code>kebab-case</code>; React components <code>PascalCase.jsx</code>; hooks <code>useThing.js</code>","JS variables and functions <code>camelCase</code>; constants <code>UPPER_SNAKE</code>","Mongo collections and fields <code>snake_case</code>, collections plural; models singular PascalCase","API paths <code>/api/v1/batch-enrollments</code>: plural, kebab-case, nouns","Permission keys <code>module.action</code>; error codes <code>UPPER_SNAKE</code>; env vars <code>UPPER_SNAKE</code>"]),col.adm),C("Structure",`<pre>server/src/modules/attendance/
+  attendance.model.js
+  attendance.routes.js
+  attendance.controller.js   // HTTP only
+  attendance.service.js      // rules live here
+  attendance.validation.js   // Zod
+  attendance.test.js
+client/src/features/attendance/
+  pages/  components/  api/</pre>`+L(["One folder per domain, matching the spec's domains","Business rules only in services, never in controllers or React"]),col.aca)])},
+{s:"Best practices",t:"Git workflow and commit messages",h:G(2,[C("Branches and pull requests",L(["<code>main</code> is always deployable and protected: no direct pushes","Short-lived branches: <code>feat/s5-attendance-bulk</code>, <code>fix/…</code>, <code>docs/…</code>, <code>chore/…</code>","Small PRs (aim under 400 lines) with the template: what, why, tests, screenshots, permissions and audit events touched","CI must pass; 1 review, 2 for auth, permissions and finance (CODEOWNERS)","Squash merge, delete branch, tag a release per sprint (semantic versioning)"]),col.adm),C("Conventional commits",`<pre>type(scope): short imperative subject
+
+feat(attendance): add bulk marking for a session
+fix(fees): block duplicate receipt numbers
+docs(api): document payments endpoints
+feat(permissions)!: require scope on role grants
+
+Refs: S5-ATT-12</pre>`+L(["Types: feat, fix, docs, refactor, test, chore, perf, ci, build","Subject 72 characters or fewer, no full stop; the body explains why","Husky and commitlint reject bad messages automatically","Issue labels: module, sprint, type"]),col.aca)])},
+{s:"Best practices",t:"Documentation and API docs",h:G(2,[C("Docs in the repo",`<pre>README.md            run it in 10 minutes
+CONTRIBUTING.md       naming, git, PR rules
+CHANGELOG.md          from commits
+docs/architecture.md  layers, domains
+docs/data-model.md    collections, indexes
+docs/permissions.md   every key and scope
+docs/workflows.md     task, resume, language
+docs/adr/0001-*.md    why we decided
+docs/runbook.md       deploy, backup, restore
+docs/onboarding.md    day 1 checklist
+.env.example  seed script</pre>`,col.adm),C("API documentation",L(["OpenAPI generated from the same Zod schemas, served at <code>/api/docs</code>","Every endpoint lists: summary, permission key and scope, request, response, error codes, example, audit event","Postman or Bruno collection kept in the repo","Docs change in the same PR as the code; CI fails if routes lack docs"]),col.aca)+C("New developer in a day",L(["Clone, copy <code>.env.example</code>, run one command, seeded demo data","Read README, architecture, permissions, then a module README","Pick a labelled starter issue"]),col.stu)])},
+{s:"Best practices",t:"Engineering standards and definition of done",h:G(3,[C("Quality",L(["ESLint and Prettier enforced on commit and in CI","Tests: services (unit), API with Supertest, key journeys end to end","Must-test rules: transfers keep history, cross-batch attendance, permission denials, payment edit blocked for collectors"]),col.aca),C("Security and data",L(["Validate every input; hash passwords; httpOnly cookies","Rate limit login; restrict CORS; secrets only in env","Never store derived values; money as Decimal128","Sensitive reads and writes audited; files in object storage, signed links"]),col.fin),C("Definition of done",L(["Schema, API, UI and tests complete","Permission key checked and documented","Audit event emitted and tested","API docs and module README updated","Reviewed, CI green, demoed on seeded data"]),col.stu)])},
+{s:"Wrap-up",t:"Decisions needed and next steps",h:`${G(2,[C("To confirm with Synnefo",L(["Admin vs Head of Academics: who owns programs and curriculum?","Exact View-only Admin scope (audit logs included?)","Can a student have a second enrollment at the same time?","Attendance denominator for shared sessions","Can one installment take part payments?","Which roles may export reports?"]),col.fin),C("Next steps",L(["Approve roles and the default permission matrix","Start Sprint 0 and Sprint 1 (Super Admin)","Set up repo, CI and documentation skeleton","Agree sprint demo dates and acceptance checks"]),col.aca)])}<div class="q" style="margin-top:12px">Thank you. Questions?</div>`}];
+// ---------- build ----------
+const stage=document.getElementById("stage"),N=SL.length;
+const secs=[];SL.forEach((s,i)=>{if(!secs.length||secs[secs.length-1][0]!==s.s)secs.push([s.s,i+1])});
+SL.forEach(s=>{if(s.h==="@AGENDA")s.h=`<div class="g g2">${secs.slice(1).map((x,i)=>`<a class="go" data-go="${x[1]}"><div class="card" style="--c:${Object.values(col)[i%6]}"><h3>${i+1}. ${x[0]}</h3><p>Starts on slide ${x[1]}</p></div></a>`).join("")}</div>`});
+stage.innerHTML=SL.map((s,i)=>`<section class="slide ${s.cls||""}" data-i="${i}">${s.cls==="title"?`<div class="bd" style="top:0;bottom:0;left:50px"><div class="fit" style="height:100%;display:flex;flex-direction:column;justify-content:center">${s.h}</div></div>`:`<div class="sec">${s.s}</div><h2>${s.t}</h2><div class="bd"><div class="fit">${s.h}</div></div>`}<div class="ft"><span>Synnefo Student Management Platform</span><span>${i+1} / ${N}</span></div></section>`).join("");
+const slides=[...stage.children];
+function fitAll(){slides.forEach(sl=>{const bd=sl.querySelector(".bd"),f=sl.querySelector(".fit");f.style.transform="";f.style.width="";const k=Math.min(1,bd.clientHeight/f.scrollHeight,bd.clientWidth/f.scrollWidth);if(k<.999){f.style.transform=`scale(${k})`;f.style.width=(100/k)+"%"}f.dataset.k=k.toFixed(2)})}
+function scaleStage(){const k=Math.min(innerWidth/1280,innerHeight/720);stage.style.transform=`translate(-50%,-50%) scale(${k})`}
+let cur=0;
+function go(n,quiet){n=Math.max(0,Math.min(N-1,n));slides.forEach((s,i)=>{s.classList.toggle("on",i===n);s.classList.toggle("pv",i<n)});cur=n;document.getElementById("bar").style.width=((n+1)/N*100)+"%";if(!quiet){try{history.replaceState(null,"","#"+(n+1))}catch(e){try{location.hash="#"+(n+1)}catch(e2){}}}document.title=SL[n].t+" | Synnefo";document.querySelectorAll(".ovg button").forEach((b,i)=>b.classList.toggle("cur",i===n))}
+const ov=document.getElementById("ov"),hp=document.getElementById("hp"),toast=document.getElementById("toast");
+document.getElementById("ovg").innerHTML=SL.map((s,i)=>`<button data-go="${i+1}"><small>${i+1} · ${s.s}</small>${s.t}</button>`).join("");
+const closeAll=()=>{ov.classList.remove("show");hp.classList.remove("show")};
+const toggle=el=>{const o=el.classList.contains("show");closeAll();if(!o)el.classList.add("show")};
+function fs(){try{Promise.resolve(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()).catch(()=>{})}catch(e){}}
+function theme(){const r=document.documentElement,l=r.dataset.theme!=="light";r.dataset.theme=l?"light":"dark";try{localStorage.setItem("syn_theme",r.dataset.theme)}catch(e){}}
+let buf="",bt;
+function say(m){toast.textContent=m;toast.style.display="block";clearTimeout(say.t);say.t=setTimeout(()=>toast.style.display="none",1400)}
+addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key;
+ if(k==="Escape"){closeAll();buf="";return}
+ if(/^[0-9]$/.test(k)){buf+=k;say("Go to slide "+buf+" (Enter)");clearTimeout(bt);bt=setTimeout(()=>{buf=""},2500);return}
+ if(k==="Enter"&&buf){go(parseInt(buf,10)-1);buf="";toast.style.display="none";closeAll();e.preventDefault();return}
+ if(["ArrowRight","ArrowDown","PageDown"," "].includes(k)){go(cur+1);e.preventDefault()}
+ else if(["ArrowLeft","ArrowUp","PageUp","Backspace"].includes(k)){go(cur-1);e.preventDefault()}
+ else if(k==="Home"){go(0);e.preventDefault()}else if(k==="End"){go(N-1);e.preventDefault()}
+ else if(k==="o"||k==="O")toggle(ov);else if(k==="f"||k==="F")fs();else if(k==="t"||k==="T")theme();else if(k==="?"||k==="h"||k==="H")toggle(hp)});
+document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g){go(parseInt(g.dataset.go,10)-1);closeAll()}});
+document.getElementById("bp").onclick=()=>go(cur-1);document.getElementById("bn").onclick=()=>go(cur+1);
+document.getElementById("bo").onclick=()=>toggle(ov);document.getElementById("bt").onclick=theme;document.getElementById("bf").onclick=fs;document.getElementById("bh").onclick=()=>toggle(hp);
+[ov,hp].forEach(o=>o.addEventListener("click",e=>{if(e.target===o)closeAll()}));
+let tx=null;addEventListener("touchstart",e=>{tx=e.touches[0].clientX},{passive:true});
+addEventListener("touchend",e=>{if(tx===null)return;const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)go(cur+(d<0?1:-1));tx=null},{passive:true});
+let idle;const ctl=document.getElementById("ctl");addEventListener("mousemove",()=>{ctl.classList.remove("h");clearTimeout(idle);idle=setTimeout(()=>ctl.classList.add("h"),3000)});
+addEventListener("resize",scaleStage);addEventListener("hashchange",()=>go((parseInt(location.hash.slice(1),10)||1)-1,true));
+try{const t=localStorage.getItem("syn_theme");if(t)document.documentElement.dataset.theme=t}catch(e){}
+scaleStage();fitAll();go((parseInt(location.hash.slice(1),10)||1)-1,true);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
+</script></body></html>

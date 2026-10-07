@@ -9,6 +9,7 @@ const PAGES = [
   { title: "Full Data Flow", href: "pages/data-flow.html", icon: "🧠", tag: "Design", desc: "One student's journey across every collection as an expandable mind map with sample data." },
   { title: "UI Structure", href: "pages/ui-structure.html", icon: "🧭", tag: "Design", desc: "57 screens, role-based sidebars and the navigation map between screens." },
   { title: "Claude Code Toolkit", href: "pages/claude-code-toolkit.html", icon: "🛠️", tag: "Guide", desc: "Skills, plugins, MCP servers and hooks for Claude Code across the full MERN development lifecycle." },
+  { title: "Blueprint Explained", href: "pages/blueprint.html", icon: "📘", tag: "Guide", desc: "Detailed walk-through of every sprint, how data is distributed across collections, and the full UI structure." },
   { title: "Sprint Plan", href: "pages/sprint-plan.html", icon: "🗓️", tag: "Plan", desc: "11 sprints: schema, backend, UI and a demo for every module, with progress tracking." },
 ];
 (function () {
